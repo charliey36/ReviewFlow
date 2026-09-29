@@ -10,9 +10,25 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {pending ? 'Adding…' : 'Add customer'}
+      {pending ? (
+        'Adding\u2026'
+      ) : (
+        <>
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Add customer
+        </>
+      )}
     </button>
   );
 }
@@ -45,7 +61,7 @@ export function AddCustomerForm() {
           name="name"
           type="text"
           required
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
           placeholder="Jane Doe"
         />
       </div>
@@ -59,7 +75,7 @@ export function AddCustomerForm() {
           name="email"
           type="email"
           required
-          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
           placeholder="jane@example.com"
         />
       </div>
@@ -67,12 +83,12 @@ export function AddCustomerForm() {
       <SubmitButton />
 
       {state.error && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 sm:ml-3">
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100 sm:ml-3">
           {state.error}
         </p>
       )}
       {state.success && (
-        <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700 sm:ml-3">
+        <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700 ring-1 ring-inset ring-brand-100 sm:ml-3">
           Customer added — review request scheduled.
         </p>
       )}

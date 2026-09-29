@@ -3,12 +3,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+
     ports:
-      - '3000:3000'
+      - "3000:3000"
+
     env_file:
       - .env.local
+
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+    command: npm run dev
+
     restart: unless-stopped

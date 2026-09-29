@@ -42,7 +42,7 @@ export function buildReviewRequestEmail(params: {
       <div style="text-align: center; margin: 32px 0;">
         <a
           href="${trackingUrl}"
-          style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 15px; font-weight: 600; display: inline-block;"
+          style="background-color: #188038; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 15px; font-weight: 600; display: inline-block;"
         >
           Leave a review
         </a>

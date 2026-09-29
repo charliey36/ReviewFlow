@@ -8,6 +8,11 @@ body {
 }
 
 body {
-  background-color: #f8fafc;
+  background-color: #f8f9fa;
+  background-image: radial-gradient(at top left, rgba(30, 142, 62, 0.05), transparent 55%);
   color: #0f172a;
+}
+
+::selection {
+  background-color: #ceead5;
 }

@@ -48,31 +48,35 @@ export async function AdminBusinessesTable() {
 
   return (
     <div className="mt-8">
-      <h2 className="text-lg font-semibold text-slate-900">
-        All registered businesses{' '}
-        <span className="text-sm font-normal text-slate-400">(admin only)</span>
-      </h2>
+      <div className="flex items-center gap-2">
+        <h2 className="text-lg font-semibold tracking-tight text-slate-900">
+          All registered businesses
+        </h2>
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+          admin only
+        </span>
+      </div>
       <p className="mt-1 text-sm text-slate-500">
         {rows.length} business{rows.length === 1 ? '' : 'es'} signed up.
       </p>
 
-      <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="min-w-full divide-y divide-slate-200">
-          <thead className="bg-slate-50">
+      <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card">
+        <table className="min-w-full divide-y divide-slate-100">
+          <thead className="bg-slate-50/60">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
                 Business
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
                 Owner email
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
                 Customers
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
                 Delay
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
                 Signed up
               </th>
             </tr>
@@ -80,14 +84,21 @@ export async function AdminBusinessesTable() {
           <tbody className="divide-y divide-slate-100">
             {rows.length > 0 ? (
               rows.map((row) => (
-                <tr key={row.id}>
-                  <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                    {row.name}
+                <tr key={row.id} className="transition-colors hover:bg-slate-50/70">
+                  <td className="px-4 py-4 text-sm font-medium text-slate-900">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700">
+                        {(row.name?.trim()?.[0] || '?').toUpperCase()}
+                      </span>
+                      {row.name || (
+                        <span className="italic text-slate-400">Unnamed business</span>
+                      )}
+                    </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{row.ownerEmail}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{row.customerCount}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">{row.delay_hours}h</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
+                  <td className="px-4 py-4 text-sm text-slate-600">{row.ownerEmail}</td>
+                  <td className="px-4 py-4 text-sm text-slate-600">{row.customerCount}</td>
+                  <td className="px-4 py-4 text-sm text-slate-600">{row.delay_hours}h</td>
+                  <td className="px-4 py-4 text-sm text-slate-600">
                     {formatDateTime(row.created_at)}
                   </td>
                 </tr>

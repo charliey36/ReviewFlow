@@ -10,25 +10,35 @@ export default async function AppLayout({
 }) {
   const business = await requireBusiness();
 
+  const initials = (business.name?.trim()?.[0] || '?').toUpperCase();
+
   return (
     <div className="min-h-screen">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-lg font-bold text-slate-900">
-              Review<span className="text-brand-600">Flow</span>
+      <header className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/85 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3.5 sm:px-6">
+          <div className="flex items-center gap-8">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white shadow-sm">
+                R
+              </span>
+              <span className="text-lg font-bold tracking-tight text-slate-900">
+                Review<span className="text-brand-600">Flow</span>
+              </span>
             </Link>
             <NavLinks />
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-slate-500 sm:inline">
-              {business.name}
-            </span>
+            <div className="hidden items-center gap-2.5 sm:flex">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700 ring-1 ring-inset ring-brand-100">
+                {initials}
+              </span>
+              <span className="text-sm font-medium text-slate-700">{business.name}</span>
+            </div>
             <form action={logout}>
               <button
                 type="submit"
-                className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
               >
                 Log out
               </button>
@@ -37,7 +47,7 @@ export default async function AppLayout({
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">{children}</main>
     </div>
   );
 }
