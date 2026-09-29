@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { AuthForm } from '@/components/auth-form';
+import { LogoStacked } from '@/components/logo';
 
 export default function LoginPage() {
   return (
@@ -7,13 +8,8 @@ export default function LoginPage() {
       <div className="relative w-full max-w-sm">
         <div className="absolute inset-x-6 -top-4 h-24 rounded-full bg-brand-100/60 blur-2xl" aria-hidden="true" />
         <div className="relative rounded-2xl border border-slate-200/70 bg-white p-8 shadow-card-lg">
-          <div className="mb-6 flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-base font-bold text-white shadow-sm">
-              R
-            </span>
-            <span className="text-lg font-bold tracking-tight text-slate-900">
-              Review<span className="text-brand-600">Flow</span>
-            </span>
+          <div className="mb-6 flex justify-center">
+            <LogoStacked />
           </div>
 
           <h1 className="text-xl font-semibold tracking-tight text-slate-900">Welcome back</h1>

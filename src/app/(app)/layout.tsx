@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { requireBusiness } from '@/lib/business';
 import { NavLinks } from '@/components/nav-links';
+import { Logo } from '@/components/logo';
 import { logout } from '@/app/(app)/actions';
 
 export default async function AppLayout({
@@ -17,13 +18,8 @@ export default async function AppLayout({
       <header className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/85 backdrop-blur-sm">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3.5 sm:px-6">
           <div className="flex items-center gap-8">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white shadow-sm">
-                R
-              </span>
-              <span className="text-lg font-bold tracking-tight text-slate-900">
-                Review<span className="text-brand-600">Flow</span>
-              </span>
+            <Link href="/dashboard">
+              <Logo />
             </Link>
             <NavLinks />
           </div>

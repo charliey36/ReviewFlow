@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { LogoStacked } from '@/components/logo';
 
 const features = [
   {
@@ -48,15 +49,8 @@ export default async function HomePage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 py-16 text-center">
-      <div className="flex items-center gap-2">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-lg font-bold text-white shadow-sm">
-          R
-        </span>
-      </div>
-      <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-        Review<span className="text-brand-600">Flow</span>
-      </h1>
-      <p className="mt-3 max-w-md text-slate-600">
+      <LogoStacked heading className="mt-0" />
+      <p className="mt-5 max-w-md text-slate-600">
         Automatically ask happy customers for a review, on a schedule you set.
       </p>
       <div className="mt-8 flex gap-3">
