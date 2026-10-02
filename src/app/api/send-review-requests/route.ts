@@ -5,8 +5,29 @@ import { sendReviewRequestEmail } from '@/lib/email';
 export const dynamic = 'force-dynamic';
 
 /**
+ * Exponential backoff schedule applied after each failed send attempt,
+ * indexed by the *new* attempt count (1st failure -> retry in 5 min, 2nd ->
+ * 30 min, 3rd -> 2 hours, 4th -> 6 hours). After the final configured
+ * attempt (default max_attempts = 5) the row is marked permanently 'failed'
+ * instead of being retried again.
+ */
+const BACKOFF_MINUTES_BY_ATTEMPT: Record<number, number> = {
+  1: 5,
+  2: 30,
+  3: 120,
+  4: 360,
+};
+const DEFAULT_BACKOFF_MINUTES = 720; // fallback for any attempt beyond the table above
+
+function backoffMinutesFor(attempt: number) {
+  return BACKOFF_MINUTES_BY_ATTEMPT[attempt] ?? DEFAULT_BACKOFF_MINUTES;
+}
+
+/**
  * Scheduled job endpoint: finds all pending review_requests whose send_at
- * has passed, sends the email, and marks them sent (or failed).
+ * (or, for a previously-failed attempt, next_attempt_at) has passed, sends
+ * the email, and marks them sent — or, on failure, schedules a retry with
+ * exponential backoff up to max_attempts before giving up permanently.
  *
  * Protected by CRON_SECRET so it can't be triggered by random visitors —
  * pass it as either `?secret=...` or an `Authorization: Bearer ...` header.
@@ -33,11 +54,15 @@ export async function GET(request: NextRequest) {
   const supabase = createAdminClient();
   const nowIso = new Date().toISOString();
 
+  // Due = pending, and either this is the first attempt (send_at has
+  // passed, next_attempt_at is still null) or a retry is due
+  // (next_attempt_at has passed).
   const { data: dueRequests, error } = await supabase
     .from('review_requests')
-    .select('id, business_id, customer_id, send_at')
+    .select('id, business_id, customer_id, send_at, attempts, max_attempts')
     .eq('status', 'pending')
     .lte('send_at', nowIso)
+    .or(`next_attempt_at.is.null,next_attempt_at.lte.${nowIso}`)
     .limit(50);
 
   if (error) {
@@ -48,21 +73,23 @@ export async function GET(request: NextRequest) {
   }
 
   if (!dueRequests || dueRequests.length === 0) {
-    return NextResponse.json({ sent: 0, failed: 0, message: 'No due review requests.' });
+    return NextResponse.json({ sent: 0, failed: 0, retried: 0, message: 'No due review requests.' });
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
   let sent = 0;
+  let retried = 0;
   let failed = 0;
-  const results: Array<{ id: string; status: 'sent' | 'failed'; error?: string }> = [];
+  let skippedUnsubscribed = 0;
+  const results: Array<{ id: string; status: 'sent' | 'retrying' | 'failed' | 'skipped'; error?: string }> = [];
 
   for (const reviewRequest of dueRequests) {
     try {
       const [{ data: customer }, { data: business }] = await Promise.all([
         supabase
           .from('customers')
-          .select('name, email')
+          .select('name, email, unsubscribed_at')
           .eq('id', reviewRequest.customer_id)
           .single(),
         supabase
@@ -76,13 +103,28 @@ export async function GET(request: NextRequest) {
         throw new Error('Customer or business record not found.');
       }
 
+      // Consent check: never send to a customer who has unsubscribed,
+      // even if their request was scheduled before they opted out.
+      if (customer.unsubscribed_at) {
+        await supabase
+          .from('review_requests')
+          .update({ status: 'cancelled' })
+          .eq('id', reviewRequest.id);
+
+        skippedUnsubscribed += 1;
+        results.push({ id: reviewRequest.id, status: 'skipped' });
+        continue;
+      }
+
       const trackingUrl = `${appUrl}/api/track/${reviewRequest.id}`;
+      const unsubscribeUrl = `${appUrl}/api/unsubscribe/${reviewRequest.customer_id}`;
 
       await sendReviewRequestEmail({
         to: customer.email,
         businessName: business.name,
         customerName: customer.name,
         trackingUrl,
+        unsubscribeUrl,
       });
 
       await supabase
@@ -94,16 +136,42 @@ export async function GET(request: NextRequest) {
       results.push({ id: reviewRequest.id, status: 'sent' });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
+      const nextAttempt = reviewRequest.attempts + 1;
+      const maxAttempts = reviewRequest.max_attempts;
 
-      await supabase
-        .from('review_requests')
-        .update({ status: 'failed' })
-        .eq('id', reviewRequest.id);
+      if (nextAttempt >= maxAttempts) {
+        // Exhausted retries — terminal failure.
+        await supabase
+          .from('review_requests')
+          .update({
+            status: 'failed',
+            attempts: nextAttempt,
+            last_error: message,
+          })
+          .eq('id', reviewRequest.id);
 
-      failed += 1;
-      results.push({ id: reviewRequest.id, status: 'failed', error: message });
+        failed += 1;
+        results.push({ id: reviewRequest.id, status: 'failed', error: message });
+      } else {
+        // Schedule a retry with exponential backoff; stays 'pending' so the
+        // next cron run picks it up once next_attempt_at has passed.
+        const backoffMs = backoffMinutesFor(nextAttempt) * 60 * 1000;
+        const nextAttemptAt = new Date(Date.now() + backoffMs).toISOString();
+
+        await supabase
+          .from('review_requests')
+          .update({
+            attempts: nextAttempt,
+            next_attempt_at: nextAttemptAt,
+            last_error: message,
+          })
+          .eq('id', reviewRequest.id);
+
+        retried += 1;
+        results.push({ id: reviewRequest.id, status: 'retrying', error: message });
+      }
     }
   }
 
-  return NextResponse.json({ sent, failed, results });
+  return NextResponse.json({ sent, retried, failed, skippedUnsubscribed, results });
 }

@@ -5,7 +5,13 @@ import type { Business } from '@/lib/database.types';
 /**
  * Gets the currently logged-in user's business row. Every authenticated page
  * needs this. Redirects to /login if there's no session, and lazily creates
- * the business row if the user has none yet (first login after signup).
+ * the business row (plus its business_members owner row) if the user has
+ * none yet (first login after signup).
+ *
+ * Access control for every other table is checked through business_members,
+ * not businesses.owner_id directly — owner_id is kept as the ultimate
+ * billing/ownership record, but a business could in principle have more
+ * than one member in the future without any RLS rewrite.
  */
 export async function requireBusiness(): Promise<Business> {
   const supabase = createClient();
@@ -15,24 +21,35 @@ export async function requireBusiness(): Promise<Business> {
     redirect('/login');
   }
 
-  const { data: business, error } = await supabase
-    .from('businesses')
-    .select('*')
-    .eq('owner_id', userData.user.id)
+  const { data: membership, error: membershipError } = await supabase
+    .from('business_members')
+    .select('business_id')
+    .eq('user_id', userData.user.id)
     .maybeSingle();
 
-  if (error) {
-    throw new Error(`Failed to load business: ${error.message}`);
+  if (membershipError) {
+    throw new Error(`Failed to load business: ${membershipError.message}`);
   }
 
-  if (business) {
+  if (membership) {
+    const { data: business, error: businessError } = await supabase
+      .from('businesses')
+      .select('*')
+      .eq('id', membership.business_id)
+      .single();
+
+    if (businessError || !business) {
+      throw new Error(`Failed to load business: ${businessError?.message ?? 'unknown error'}`);
+    }
+
     return business;
   }
 
   // First time this user has hit an authenticated page — create their
-  // business row with defaults. Next.js can render the (app) layout and the
-  // page inside it concurrently, so two requests can both reach this point
-  // for the same brand-new user at once. Use upsert with onConflict so the
+  // business row with defaults, plus the business_members row that grants
+  // them access to it. Next.js can render the (app) layout and the page
+  // inside it concurrently, so two requests can both reach this point for
+  // the same brand-new user at once. Use upsert with onConflict so the
   // losing request doesn't throw on the unique(owner_id) constraint — it
   // just gets back the row the other request created.
   const { data: created, error: createError } = await supabase
@@ -46,6 +63,13 @@ export async function requireBusiness(): Promise<Business> {
       `Failed to create business: ${createError?.message ?? 'unknown error'}`
     );
   }
+
+  await supabase
+    .from('business_members')
+    .upsert(
+      { business_id: created.id, user_id: userData.user.id, role: 'owner' },
+      { onConflict: 'business_id,user_id', ignoreDuplicates: true }
+    );
 
   return created;
 }

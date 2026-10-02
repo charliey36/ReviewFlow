@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
 import { AddCustomerForm } from './add-customer-form';
@@ -13,6 +14,7 @@ const statusStyles: Record<string, string> = {
   pending: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-100',
   sent: 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100',
   failed: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-100',
+  cancelled: 'bg-slate-100 text-slate-500 ring-1 ring-inset ring-slate-200',
 };
 
 const avatarPalette = [
@@ -46,9 +48,14 @@ export default async function CustomersPage() {
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Customers</h1>
-        <span className="text-sm text-slate-400">
-          {customers?.length ?? 0} total
-        </span>
+        <div className="flex items-center gap-4">
+          <Link href="/customers/import" className="text-sm font-medium text-brand-700 hover:underline">
+            Import CSV
+          </Link>
+          <span className="text-sm text-slate-400">
+            {customers?.length ?? 0} total
+          </span>
+        </div>
       </div>
       <p className="mt-1.5 text-sm text-slate-500">
         Add a customer to automatically schedule a review request email.
@@ -101,14 +108,14 @@ export default async function CustomersPage() {
                 return (
                   <tr key={customer.id} className="transition-colors hover:bg-slate-50/70">
                     <td className="px-4 py-4 text-sm font-medium text-slate-900">
-                      <div className="flex items-center gap-3">
+                      <Link href={`/customers/${customer.id}`} className="flex items-center gap-3 hover:underline">
                         <span
                           className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarTone(customer.name)}`}
                         >
                           {customer.name.trim()[0]?.toUpperCase() ?? '?'}
                         </span>
                         {customer.name}
-                      </div>
+                      </Link>
                     </td>
                     <td className="px-4 py-4 text-sm text-slate-600">{customer.email}</td>
                     <td className="px-4 py-4 text-sm text-slate-600">

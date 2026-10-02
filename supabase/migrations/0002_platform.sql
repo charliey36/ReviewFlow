@@ -1,0 +1,14 @@
+-- Migration: full platform build-out (team support, service/visit history,
+-- generalized messaging/journeys, compliant feedback, segmentation, loyalty,
+-- referrals). Run this AFTER 0001_retry_and_consent.sql on an existing
+-- database, by pasting the full contents of supabase/schema.sql into the
+-- Supabase SQL editor and running it. schema.sql uses `create table if not
+-- exists` and `drop policy if exists` / `create policy` throughout, so it is
+-- safe (idempotent) to run again on a database that already has some of
+-- these tables — it will only create what's missing and refresh policies.
+--
+-- There is no separate SQL to copy here: for an existing project, the
+-- single safe path is "run schema.sql in full." A `\i` include was
+-- considered but was dropped because it only works via `psql`/`supabase db
+-- push`, not when pasted directly into the Supabase SQL editor, which is
+-- the workflow documented in README.md.

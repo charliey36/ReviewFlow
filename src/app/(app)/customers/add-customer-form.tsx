@@ -80,6 +80,19 @@ export function AddCustomerForm() {
         />
       </div>
 
+      <div className="flex-1">
+        <label htmlFor="phone" className="block text-sm font-medium text-slate-700">
+          Phone <span className="text-slate-400">(optional)</span>
+        </label>
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+          placeholder="+1 555 123 4567"
+        />
+      </div>
+
       <SubmitButton />
 
       {state.error && (

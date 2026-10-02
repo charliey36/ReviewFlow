@@ -1,11 +1,13 @@
--- ReviewFlow MVP schema
--- Run this in the Supabase SQL editor (or via `supabase db push` with this file
--- in supabase/migrations) on a fresh project.
+-- ReviewFlow schema — full platform migration.
+-- Adds team support, service/visit history, generalized multi-channel
+-- messaging + journeys, compliant private feedback, segmentation, loyalty,
+-- and referrals on top of the original MVP tables. Additive only — nothing
+-- destructive. Run this file on a fresh project; existing projects should
+-- run supabase/migrations/0001_retry_and_consent.sql followed by
+-- supabase/migrations/0002_platform.sql.
 
 -- ---------------------------------------------------------------------------
 -- businesses
--- One row per authenticated user (owner_id = auth.users.id). Holds the
--- settings shown on the Settings page.
 -- ---------------------------------------------------------------------------
 create table if not exists public.businesses (
   id uuid primary key default gen_random_uuid(),
@@ -13,10 +15,31 @@ create table if not exists public.businesses (
   name text not null default 'My Business',
   google_review_url text not null default '',
   delay_hours numeric not null default 2,
+  brand_logo_url text,
+  brand_primary_color text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (owner_id)
 );
+
+-- ---------------------------------------------------------------------------
+-- business_members
+-- Team support. owner_id on `businesses` remains the ultimate owner (billing
+-- etc.), but access control for every other table is now checked through
+-- this join table so a business can eventually have more than one user.
+-- A row for the owner is created automatically wherever a business is
+-- created (see requireBusiness()).
+-- ---------------------------------------------------------------------------
+create table if not exists public.business_members (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  role text not null default 'owner' check (role in ('owner', 'admin', 'staff')),
+  created_at timestamptz not null default now(),
+  unique (business_id, user_id)
+);
+
+create index if not exists business_members_user_id_idx on public.business_members (user_id);
 
 -- ---------------------------------------------------------------------------
 -- customers
@@ -26,33 +49,282 @@ create table if not exists public.customers (
   business_id uuid not null references public.businesses (id) on delete cascade,
   name text not null,
   email text not null,
+  phone text,
+  date_of_birth date,
+  source text,
+  unsubscribed_at timestamptz,
+  unsubscribed_sms_at timestamptz,
   created_at timestamptz not null default now()
 );
 
 create index if not exists customers_business_id_idx on public.customers (business_id);
 
 -- ---------------------------------------------------------------------------
--- review_requests
--- One row per customer, created at the same time as the customer, with a
--- computed send_at time. The scheduled job flips status pending -> sent.
+-- customer_tags
+-- Many-to-many free-text tags, the simplest possible segmentation primitive.
+-- ---------------------------------------------------------------------------
+create table if not exists public.customer_tags (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  customer_id uuid not null references public.customers (id) on delete cascade,
+  tag text not null,
+  created_at timestamptz not null default now(),
+  unique (customer_id, tag)
+);
+
+create index if not exists customer_tags_business_id_tag_idx on public.customer_tags (business_id, tag);
+create index if not exists customer_tags_customer_id_idx on public.customer_tags (customer_id);
+
+-- ---------------------------------------------------------------------------
+-- services
+-- Service catalog. recurrence_interval_days drives rebooking reminders.
+-- ---------------------------------------------------------------------------
+create table if not exists public.services (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  name text not null,
+  recurrence_interval_days integer,
+  default_price numeric,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists services_business_id_idx on public.services (business_id);
+
+-- ---------------------------------------------------------------------------
+-- visits
+-- Service history — the foundation for rebooking reminders, CLV, and health
+-- scoring. Logged manually from the customer detail page (no POS/calendar
+-- integration in this version).
+-- ---------------------------------------------------------------------------
+create table if not exists public.visits (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  customer_id uuid not null references public.customers (id) on delete cascade,
+  service_id uuid references public.services (id) on delete set null,
+  visited_at timestamptz not null default now(),
+  price numeric,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists visits_business_id_idx on public.visits (business_id);
+create index if not exists visits_customer_id_visited_at_idx on public.visits (customer_id, visited_at desc);
+
+-- ---------------------------------------------------------------------------
+-- messages
+-- Generalized replacement for the single-purpose `review_requests` table.
+-- Every outbound message of any purpose/channel is a row here. Retry
+-- support (attempts/max_attempts/next_attempt_at) carries over from
+-- review_requests. `review_requests` is kept as-is for backward
+-- compatibility (the original review-request flow still writes to it
+-- directly) — `messages` is used by every *new* feature (sequences,
+-- rebooking reminders, win-back, birthday).
+-- ---------------------------------------------------------------------------
+create table if not exists public.messages (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  customer_id uuid not null references public.customers (id) on delete cascade,
+  purpose text not null check (purpose in (
+    'review_request', 'review_reminder', 'rebooking_reminder',
+    'win_back', 'birthday', 'referral', 'loyalty', 'custom'
+  )),
+  channel text not null default 'email' check (channel in ('email', 'sms', 'whatsapp')),
+  journey_enrollment_id uuid,
+  sequence_step integer not null default 1,
+  status text not null default 'pending' check (status in ('pending', 'sent', 'failed', 'cancelled')),
+  send_at timestamptz not null,
+  sent_at timestamptz,
+  attempts integer not null default 0,
+  max_attempts integer not null default 5,
+  next_attempt_at timestamptz,
+  last_error text,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists messages_business_id_idx on public.messages (business_id);
+create index if not exists messages_status_send_at_idx on public.messages (status, send_at);
+create index if not exists messages_status_next_attempt_idx on public.messages (status, next_attempt_at);
+create index if not exists messages_customer_id_purpose_idx on public.messages (customer_id, purpose, created_at);
+
+-- ---------------------------------------------------------------------------
+-- interaction_events
+-- Generalized replacement/superset of `click_events`. Any trackable
+-- customer interaction (click, review confirmation, feedback submission).
+-- ---------------------------------------------------------------------------
+create table if not exists public.interaction_events (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  message_id uuid references public.messages (id) on delete cascade,
+  customer_id uuid references public.customers (id) on delete cascade,
+  event_type text not null check (event_type in ('click', 'review_confirmed', 'feedback_submitted')),
+  occurred_at timestamptz not null default now(),
+  metadata jsonb not null default '{}'::jsonb
+);
+
+create index if not exists interaction_events_business_id_idx on public.interaction_events (business_id, event_type, occurred_at);
+create index if not exists interaction_events_message_id_idx on public.interaction_events (message_id);
+
+-- ---------------------------------------------------------------------------
+-- private_feedback
+-- Compliant alternative to "review gating": every review request/landing
+-- page shows BOTH the public review link AND this private feedback option,
+-- unconditionally, to 100% of customers. Never used to decide whether to
+-- show the public link — see src/lib/compliance.ts for the enforced
+-- invariant and its accompanying tests.
+-- ---------------------------------------------------------------------------
+create table if not exists public.private_feedback (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  customer_id uuid references public.customers (id) on delete cascade,
+  message_id uuid references public.messages (id) on delete set null,
+  rating integer check (rating between 1 and 5),
+  comment text not null,
+  status text not null default 'new' check (status in ('new', 'acknowledged', 'resolved')),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists private_feedback_business_id_idx on public.private_feedback (business_id, status, created_at);
+
+-- ---------------------------------------------------------------------------
+-- journeys / journey_enrollments
+-- Minimal journey engine: a journey is an ordered list of steps (jsonb) —
+-- {wait_hours, channel, purpose, template}. Enrollments track where each
+-- customer is in a given journey. Used by review sequences, rebooking
+-- reminders, win-back, and birthday campaigns alike.
+-- ---------------------------------------------------------------------------
+create table if not exists public.journeys (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  key text not null check (key in ('review_sequence', 'rebooking_reminder', 'win_back', 'birthday')),
+  name text not null,
+  is_active boolean not null default true,
+  steps jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (business_id, key)
+);
+
+create table if not exists public.journey_enrollments (
+  id uuid primary key default gen_random_uuid(),
+  journey_id uuid not null references public.journeys (id) on delete cascade,
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  customer_id uuid not null references public.customers (id) on delete cascade,
+  current_step integer not null default 0,
+  status text not null default 'active' check (status in ('active', 'completed', 'exited')),
+  enrolled_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists journey_enrollments_journey_status_idx on public.journey_enrollments (journey_id, status);
+create index if not exists journey_enrollments_customer_id_idx on public.journey_enrollments (customer_id);
+
+-- ---------------------------------------------------------------------------
+-- segments
+-- Saved dynamic segment definitions. rule_definition is a small structured
+-- JSON (field/operator/value conditions, ANDed) evaluated live at read time
+-- by src/lib/segments.ts — never persisted as a static member list.
+-- ---------------------------------------------------------------------------
+create table if not exists public.segments (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  name text not null,
+  rule_definition jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists segments_business_id_idx on public.segments (business_id);
+
+-- ---------------------------------------------------------------------------
+-- loyalty_programs / loyalty_ledger_entries / loyalty_rewards
+-- Points ledger is append-only; balance is always a derived sum, never a
+-- mutable field, so there is no code path that can corrupt a balance by
+-- editing history.
+-- ---------------------------------------------------------------------------
+create table if not exists public.loyalty_programs (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  is_active boolean not null default false,
+  points_per_visit integer not null default 10,
+  points_per_referral integer not null default 50,
+  points_per_review integer not null default 20,
+  redemption_points integer not null default 100,
+  redemption_reward_description text not null default '$10 off your next visit',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (business_id)
+);
+
+create table if not exists public.loyalty_ledger_entries (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  customer_id uuid not null references public.customers (id) on delete cascade,
+  delta integer not null,
+  reason text not null check (reason in ('visit', 'referral', 'review', 'redemption', 'birthday', 'manual')),
+  reference_type text,
+  reference_id uuid,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists loyalty_ledger_customer_id_idx on public.loyalty_ledger_entries (customer_id, created_at);
+
+-- ---------------------------------------------------------------------------
+-- referrals
+-- ---------------------------------------------------------------------------
+create table if not exists public.referrals (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  referrer_customer_id uuid not null references public.customers (id) on delete cascade,
+  referee_customer_id uuid references public.customers (id) on delete set null,
+  code text not null,
+  status text not null default 'pending' check (status in ('pending', 'completed')),
+  reward_granted_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (business_id, code)
+);
+
+create index if not exists referrals_business_id_idx on public.referrals (business_id);
+create index if not exists referrals_referrer_customer_id_idx on public.referrals (referrer_customer_id);
+
+-- ---------------------------------------------------------------------------
+-- import_jobs
+-- Lightweight record of CSV import runs (the import itself is synchronous
+-- in this version — this table is just a history log, not a job queue).
+-- ---------------------------------------------------------------------------
+create table if not exists public.import_jobs (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  total_rows integer not null default 0,
+  success_count integer not null default 0,
+  error_count integer not null default 0,
+  duplicate_count integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists import_jobs_business_id_idx on public.import_jobs (business_id);
+
+-- ---------------------------------------------------------------------------
+-- Pre-existing tables kept for backward compatibility
 -- ---------------------------------------------------------------------------
 create table if not exists public.review_requests (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references public.businesses (id) on delete cascade,
   customer_id uuid not null references public.customers (id) on delete cascade,
-  status text not null default 'pending' check (status in ('pending', 'sent', 'failed')),
+  status text not null default 'pending' check (status in ('pending', 'sent', 'failed', 'cancelled')),
   send_at timestamptz not null,
   sent_at timestamptz,
+  attempts integer not null default 0,
+  max_attempts integer not null default 5,
+  next_attempt_at timestamptz,
+  last_error text,
   created_at timestamptz not null default now()
 );
 
 create index if not exists review_requests_business_id_idx on public.review_requests (business_id);
 create index if not exists review_requests_status_send_at_idx on public.review_requests (status, send_at);
+create index if not exists review_requests_status_next_attempt_idx on public.review_requests (status, next_attempt_at);
 
--- ---------------------------------------------------------------------------
--- click_events
--- One row per click on the tracked review link inside an email.
--- ---------------------------------------------------------------------------
 create table if not exists public.click_events (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references public.businesses (id) on delete cascade,
@@ -64,13 +336,27 @@ create index if not exists click_events_business_id_idx on public.click_events (
 
 -- ---------------------------------------------------------------------------
 -- Row Level Security
--- Each business owner can only see/manage their own rows. The scheduled email
--- job and the public click-tracking redirect run with the service role key,
--- which bypasses RLS by design (needed since click tracking is hit by an
--- unauthenticated visitor from their email client).
+-- Every per-business table is scoped via business_members, so a business
+-- can later have more than one user without any RLS rewrite. The scheduled
+-- jobs and public tracking/feedback/unsubscribe endpoints run with the
+-- service role key, which bypasses RLS by design.
 -- ---------------------------------------------------------------------------
 alter table public.businesses enable row level security;
+alter table public.business_members enable row level security;
 alter table public.customers enable row level security;
+alter table public.customer_tags enable row level security;
+alter table public.services enable row level security;
+alter table public.visits enable row level security;
+alter table public.messages enable row level security;
+alter table public.interaction_events enable row level security;
+alter table public.private_feedback enable row level security;
+alter table public.journeys enable row level security;
+alter table public.journey_enrollments enable row level security;
+alter table public.segments enable row level security;
+alter table public.loyalty_programs enable row level security;
+alter table public.loyalty_ledger_entries enable row level security;
+alter table public.referrals enable row level security;
+alter table public.import_jobs enable row level security;
 alter table public.review_requests enable row level security;
 alter table public.click_events enable row level security;
 
@@ -78,41 +364,129 @@ drop policy if exists "Owner can manage own business" on public.businesses;
 create policy "Owner can manage own business"
   on public.businesses
   for all
-  using (auth.uid() = owner_id)
-  with check (auth.uid() = owner_id);
+  using (id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (owner_id = auth.uid());
 
-drop policy if exists "Owner can manage own customers" on public.customers;
-create policy "Owner can manage own customers"
+drop policy if exists "Member can view own membership" on public.business_members;
+create policy "Member can view own membership"
+  on public.business_members
+  for select
+  using (user_id = auth.uid());
+
+-- Generic per-business policy, reused verbatim (modulo table name) for every
+-- business-scoped table below.
+drop policy if exists "Member can manage own customers" on public.customers;
+create policy "Member can manage own customers"
   on public.customers
   for all
-  using (
-    business_id in (select id from public.businesses where owner_id = auth.uid())
-  )
-  with check (
-    business_id in (select id from public.businesses where owner_id = auth.uid())
-  );
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (business_id in (select business_id from public.business_members where user_id = auth.uid()));
 
-drop policy if exists "Owner can manage own review requests" on public.review_requests;
-create policy "Owner can manage own review requests"
+drop policy if exists "Member can manage own customer_tags" on public.customer_tags;
+create policy "Member can manage own customer_tags"
+  on public.customer_tags
+  for all
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (business_id in (select business_id from public.business_members where user_id = auth.uid()));
+
+drop policy if exists "Member can manage own services" on public.services;
+create policy "Member can manage own services"
+  on public.services
+  for all
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (business_id in (select business_id from public.business_members where user_id = auth.uid()));
+
+drop policy if exists "Member can manage own visits" on public.visits;
+create policy "Member can manage own visits"
+  on public.visits
+  for all
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (business_id in (select business_id from public.business_members where user_id = auth.uid()));
+
+drop policy if exists "Member can manage own messages" on public.messages;
+create policy "Member can manage own messages"
+  on public.messages
+  for all
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (business_id in (select business_id from public.business_members where user_id = auth.uid()));
+
+drop policy if exists "Member can view own interaction_events" on public.interaction_events;
+create policy "Member can view own interaction_events"
+  on public.interaction_events
+  for select
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()));
+
+drop policy if exists "Member can manage own private_feedback" on public.private_feedback;
+create policy "Member can manage own private_feedback"
+  on public.private_feedback
+  for all
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (business_id in (select business_id from public.business_members where user_id = auth.uid()));
+
+drop policy if exists "Member can manage own journeys" on public.journeys;
+create policy "Member can manage own journeys"
+  on public.journeys
+  for all
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (business_id in (select business_id from public.business_members where user_id = auth.uid()));
+
+drop policy if exists "Member can manage own journey_enrollments" on public.journey_enrollments;
+create policy "Member can manage own journey_enrollments"
+  on public.journey_enrollments
+  for all
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (business_id in (select business_id from public.business_members where user_id = auth.uid()));
+
+drop policy if exists "Member can manage own segments" on public.segments;
+create policy "Member can manage own segments"
+  on public.segments
+  for all
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (business_id in (select business_id from public.business_members where user_id = auth.uid()));
+
+drop policy if exists "Member can manage own loyalty_programs" on public.loyalty_programs;
+create policy "Member can manage own loyalty_programs"
+  on public.loyalty_programs
+  for all
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (business_id in (select business_id from public.business_members where user_id = auth.uid()));
+
+drop policy if exists "Member can manage own loyalty_ledger_entries" on public.loyalty_ledger_entries;
+create policy "Member can manage own loyalty_ledger_entries"
+  on public.loyalty_ledger_entries
+  for all
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (business_id in (select business_id from public.business_members where user_id = auth.uid()));
+
+drop policy if exists "Member can manage own referrals" on public.referrals;
+create policy "Member can manage own referrals"
+  on public.referrals
+  for all
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (business_id in (select business_id from public.business_members where user_id = auth.uid()));
+
+drop policy if exists "Member can view own import_jobs" on public.import_jobs;
+create policy "Member can view own import_jobs"
+  on public.import_jobs
+  for all
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (business_id in (select business_id from public.business_members where user_id = auth.uid()));
+
+drop policy if exists "Member can manage own review requests" on public.review_requests;
+create policy "Member can manage own review requests"
   on public.review_requests
   for all
-  using (
-    business_id in (select id from public.businesses where owner_id = auth.uid())
-  )
-  with check (
-    business_id in (select id from public.businesses where owner_id = auth.uid())
-  );
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()))
+  with check (business_id in (select business_id from public.business_members where user_id = auth.uid()));
 
-drop policy if exists "Owner can view own click events" on public.click_events;
-create policy "Owner can view own click events"
+drop policy if exists "Member can view own click events" on public.click_events;
+create policy "Member can view own click events"
   on public.click_events
   for select
-  using (
-    business_id in (select id from public.businesses where owner_id = auth.uid())
-  );
+  using (business_id in (select business_id from public.business_members where user_id = auth.uid()));
 
 -- ---------------------------------------------------------------------------
--- Keep businesses.updated_at fresh
+-- Keep updated_at columns fresh
 -- ---------------------------------------------------------------------------
 create or replace function public.set_updated_at()
 returns trigger as $$
@@ -127,3 +501,58 @@ create trigger businesses_set_updated_at
   before update on public.businesses
   for each row
   execute function public.set_updated_at();
+
+drop trigger if exists journeys_set_updated_at on public.journeys;
+create trigger journeys_set_updated_at
+  before update on public.journeys
+  for each row
+  execute function public.set_updated_at();
+
+drop trigger if exists journey_enrollments_set_updated_at on public.journey_enrollments;
+create trigger journey_enrollments_set_updated_at
+  before update on public.journey_enrollments
+  for each row
+  execute function public.set_updated_at();
+
+drop trigger if exists loyalty_programs_set_updated_at on public.loyalty_programs;
+create trigger loyalty_programs_set_updated_at
+  before update on public.loyalty_programs
+  for each row
+  execute function public.set_updated_at();
+
+-- ---------------------------------------------------------------------------
+-- Backfill business_members from existing businesses.owner_id, and seed a
+-- default review_sequence journey for every existing business, so this
+-- migration is safe to run against a database that already has data.
+-- ---------------------------------------------------------------------------
+insert into public.business_members (business_id, user_id, role)
+select id, owner_id, 'owner' from public.businesses
+on conflict (business_id, user_id) do nothing;
+
+insert into public.journeys (business_id, key, name, steps)
+select
+  id,
+  'review_sequence',
+  'Review request sequence',
+  '[
+    {"wait_hours": 0, "channel": "email", "purpose": "review_request"},
+    {"wait_hours": 72, "channel": "email", "purpose": "review_reminder"},
+    {"wait_hours": 168, "channel": "email", "purpose": "review_reminder"}
+  ]'::jsonb
+from public.businesses
+on conflict (business_id, key) do nothing;
+
+insert into public.journeys (business_id, key, name, steps)
+select id, 'rebooking_reminder', 'Rebooking reminder', '[{"wait_hours": 0, "channel": "email", "purpose": "rebooking_reminder"}]'::jsonb
+from public.businesses
+on conflict (business_id, key) do nothing;
+
+insert into public.journeys (business_id, key, name, steps)
+select id, 'win_back', 'Win-back campaign', '[{"wait_hours": 0, "channel": "email", "purpose": "win_back"}]'::jsonb
+from public.businesses
+on conflict (business_id, key) do nothing;
+
+insert into public.journeys (business_id, key, name, steps)
+select id, 'birthday', 'Birthday campaign', '[{"wait_hours": 0, "channel": "email", "purpose": "birthday"}]'::jsonb
+from public.businesses
+on conflict (business_id, key) do nothing;

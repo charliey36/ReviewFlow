@@ -20,14 +20,17 @@ function escapeHtml(value: string) {
 /**
  * Builds the review request email HTML. `trackingUrl` points at our own
  * /api/track/[reviewRequestId] endpoint, which records the click and then
- * redirects to the business's real Google review URL.
+ * redirects to the business's real Google review URL. `unsubscribeUrl`
+ * points at /api/unsubscribe/[customerId] so every send includes a working
+ * opt-out link, as required by CAN-SPAM.
  */
 export function buildReviewRequestEmail(params: {
   businessName: string;
   customerName: string;
   trackingUrl: string;
+  unsubscribeUrl: string;
 }) {
-  const { businessName, customerName, trackingUrl } = params;
+  const { businessName, customerName, trackingUrl, unsubscribeUrl } = params;
   const safeBusinessName = escapeHtml(businessName);
   const safeCustomerName = escapeHtml(customerName);
 
@@ -47,13 +50,17 @@ export function buildReviewRequestEmail(params: {
           Leave a review
         </a>
       </div>
-      <p style="font-size: 13px; color: #64748b; margin: 0;">
+      <p style="font-size: 13px; color: #64748b; margin: 0 0 8px;">
         Sent by ${safeBusinessName} via ReviewFlow.
+      </p>
+      <p style="font-size: 13px; color: #94a3b8; margin: 0;">
+        <a href="${unsubscribeUrl}" style="color: #94a3b8; text-decoration: underline;">Unsubscribe</a>
+        from future review request emails.
       </p>
     </div>
   `;
 
-  const text = `Hi ${customerName},\n\nThanks for visiting ${businessName}. We'd love your feedback.\n\nLeave a review: ${trackingUrl}\n\nSent by ${businessName} via ReviewFlow.`;
+  const text = `Hi ${customerName},\n\nThanks for visiting ${businessName}. We'd love your feedback.\n\nLeave a review: ${trackingUrl}\n\nSent by ${businessName} via ReviewFlow.\n\nUnsubscribe from future review request emails: ${unsubscribeUrl}`;
 
   return { subject, html, text };
 }
@@ -63,6 +70,7 @@ export async function sendReviewRequestEmail(params: {
   businessName: string;
   customerName: string;
   trackingUrl: string;
+  unsubscribeUrl: string;
 }) {
   const resend = getResendClient();
   const from = process.env.EMAIL_FROM || 'onboarding@resend.dev';
@@ -74,6 +82,9 @@ export async function sendReviewRequestEmail(params: {
     subject,
     html,
     text,
+    headers: {
+      'List-Unsubscribe': `<${params.unsubscribeUrl}>`,
+    },
   });
 
   if (error) {

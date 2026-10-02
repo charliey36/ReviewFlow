@@ -72,7 +72,7 @@ export default async function DashboardPage() {
   const { data: userData } = await supabase.auth.getUser();
   const isAdmin = isAdminEmail(userData.user?.email);
 
-  const [customersCount, emailsSentCount, clicksCount] = await Promise.all([
+  const [customersCount, emailsSentCount, clicksCount, pendingCount, failedCount] = await Promise.all([
     supabase
       .from('customers')
       .select('id', { count: 'exact', head: true })
@@ -86,9 +86,27 @@ export default async function DashboardPage() {
       .from('click_events')
       .select('id', { count: 'exact', head: true })
       .eq('business_id', business.id),
+    supabase
+      .from('review_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('business_id', business.id)
+      .eq('status', 'pending'),
+    supabase
+      .from('review_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('business_id', business.id)
+      .eq('status', 'failed'),
   ]);
 
   const hasReviewUrl = Boolean(business.google_review_url);
+
+  const sent = emailsSentCount.count ?? 0;
+  const clicks = clicksCount.count ?? 0;
+  // Click-through rate on sent emails. Note this measures clicks on the
+  // review link, not confirmed reviews left on Google — ReviewFlow has no
+  // way to read that back from Google today, so this is a conversion proxy,
+  // not a true review-conversion rate.
+  const clickRate = sent > 0 ? Math.round((clicks / sent) * 1000) / 10 : null;
 
   return (
     <div>
@@ -145,7 +163,7 @@ export default async function DashboardPage() {
         />
         <StatCard
           label="Emails sent"
-          value={emailsSentCount.count ?? 0}
+          value={sent}
           tone="blue"
           icon={
             <path
@@ -157,7 +175,7 @@ export default async function DashboardPage() {
         />
         <StatCard
           label="Review link clicks"
-          value={clicksCount.count ?? 0}
+          value={clicks}
           tone="violet"
           icon={
             <path
@@ -167,6 +185,73 @@ export default async function DashboardPage() {
             />
           }
         />
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-sm font-semibold text-slate-900">Review request funnel</h2>
+          <span className="text-xs text-slate-400">All time</span>
+        </div>
+
+        {sent === 0 ? (
+          <p className="mt-4 text-sm text-slate-500">
+            Not enough data yet — send some review requests to see your conversion rate here.
+          </p>
+        ) : (
+          <>
+            <div className="mt-5 flex items-center gap-4">
+              <div className="flex-1">
+                <div className="flex items-baseline justify-between text-xs text-slate-500">
+                  <span>Sent</span>
+                  <span>{sent}</span>
+                </div>
+                <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full w-full rounded-full bg-sky-500" />
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-4">
+              <div className="flex-1">
+                <div className="flex items-baseline justify-between text-xs text-slate-500">
+                  <span>Clicked</span>
+                  <span>{clicks}</span>
+                </div>
+                <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-violet-500"
+                    style={{ width: `${Math.min(100, clickRate ?? 0)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-4 text-sm text-slate-600">
+              <span className="text-2xl font-bold tabular-nums tracking-tight text-slate-900">
+                {clickRate}%
+              </span>{' '}
+              click-through rate on sent review requests.
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              Measures clicks on the review link, not confirmed reviews left on Google — ReviewFlow
+              can&apos;t see that outcome once a customer leaves the tracking redirect.
+            </p>
+          </>
+        )}
+
+        {((pendingCount.count ?? 0) > 0 || (failedCount.count ?? 0) > 0) && (
+          <div className="mt-5 flex flex-wrap gap-3 border-t border-slate-100 pt-4">
+            {(pendingCount.count ?? 0) > 0 && (
+              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-100">
+                {pendingCount.count} pending
+              </span>
+            )}
+            {(failedCount.count ?? 0) > 0 && (
+              <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-100">
+                {failedCount.count} failed after retries
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="mt-8 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card">

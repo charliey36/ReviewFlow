@@ -41,10 +41,14 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = pathname === '/login' || pathname === '/signup';
   const isPublicApiRoute = pathname.startsWith('/api/track') ||
+    pathname.startsWith('/api/unsubscribe') ||
     pathname.startsWith('/api/send-review-requests') ||
+    pathname.startsWith('/api/send-messages') ||
+    pathname.startsWith('/api/scan-customer-lifecycle') ||
     pathname.startsWith('/auth/callback');
+  const isPublicPage = pathname.startsWith('/feedback/') || pathname.startsWith('/book/') || pathname.startsWith('/r/');
 
-  if (!user && !isAuthPage && !isPublicApiRoute && pathname !== '/') {
+  if (!user && !isAuthPage && !isPublicApiRoute && !isPublicPage && pathname !== '/') {
     const redirectUrl = new URL('/login', request.url);
     return NextResponse.redirect(redirectUrl);
   }

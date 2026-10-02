@@ -88,6 +88,17 @@ async function main() {
   }
   console.log(`Business ready: ${business.name} (${business.id})`);
 
+  console.log('Ensuring business_members row exists...');
+  const { error: memberError } = await supabase
+    .from('business_members')
+    .upsert(
+      { business_id: business.id, user_id: ownerId, role: 'owner' },
+      { onConflict: 'business_id,user_id', ignoreDuplicates: true }
+    );
+  if (memberError) {
+    throw new Error(`Failed to upsert business_members: ${memberError.message}`);
+  }
+
   console.log('Seeding sample customers...');
   const now = Date.now();
 
