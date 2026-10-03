@@ -28,8 +28,9 @@ export async function requireBusiness(): Promise<Business> {
     .maybeSingle();
 
   if (membershipError) {
-    throw new Error(`Failed to load business: ${membershipError.message}`);
-  }
+  console.error('membershipError', membershipError);
+  throw new Error(`Failed to load business: ${membershipError.message}`);
+}
 
   if (membership) {
     const { data: business, error: businessError } = await supabase
@@ -39,8 +40,10 @@ export async function requireBusiness(): Promise<Business> {
       .single();
 
     if (businessError || !business) {
-      throw new Error(`Failed to load business: ${businessError?.message ?? 'unknown error'}`);
-    }
+  console.error('businessError', businessError);
+  console.error('business', business);
+  throw new Error(`Failed to load business: ${businessError?.message ?? 'unknown error'}`);
+}
 
     return business;
   }
@@ -59,10 +62,11 @@ export async function requireBusiness(): Promise<Business> {
     .single();
 
   if (createError || !created) {
-    throw new Error(
-      `Failed to create business: ${createError?.message ?? 'unknown error'}`
-    );
-  }
+  console.error('createError', createError);
+  throw new Error(
+    `Failed to create business: ${createError?.message ?? 'unknown error'}`
+  );
+}
 
   await supabase
     .from('business_members')
