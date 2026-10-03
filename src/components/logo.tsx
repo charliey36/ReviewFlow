@@ -18,8 +18,9 @@ const PlaneIcon = ({ className }: { className?: string }) => (
 );
 
 /**
- * Horizontal lockup: icon + wordmark inline. Used in the app header and
- * anywhere space is constrained to a single row (nav bars, footers).
+ * Horizontal lockup: icon + wordmark inline. Used anywhere space is
+ * constrained to a single row on a light background (footers, light
+ * headers).
  */
 export function Logo({ className }: { className?: string }) {
   return (
@@ -27,6 +28,22 @@ export function Logo({ className }: { className?: string }) {
       <PlaneIcon className="h-5 w-5 text-brand-600" />
       <span className="text-lg font-bold tracking-tight text-[#1a1a1a]">
         Review<span className="text-brand-600">Flow</span>
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Horizontal lockup for dark/brand-green backgrounds (the sidebar header).
+ * Same mark as `Logo`, but with light text so it reads correctly against
+ * the brand-700/800 sidebar fill instead of white.
+ */
+export function LogoOnDark({ className }: { className?: string }) {
+  return (
+    <span className={`inline-flex items-center gap-2 ${className ?? ''}`}>
+      <PlaneIcon className="h-5 w-5 text-white" />
+      <span className="text-lg font-bold tracking-tight text-white">
+        Review<span className="text-brand-200">Flow</span>
       </span>
     </span>
   );

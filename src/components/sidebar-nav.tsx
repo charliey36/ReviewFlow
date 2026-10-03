@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const links = [
+export const navLinks = [
   {
     href: '/dashboard',
     label: 'Dashboard',
@@ -86,25 +86,33 @@ const links = [
   },
 ];
 
-export function NavLinks() {
+/**
+ * Vertical sidebar navigation. Reuses the same `navLinks` config as the
+ * (removed) horizontal top bar, so adding/removing a nav item only ever
+ * requires editing the list above in one place.
+ */
+export function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center gap-1">
-      {links.map((link) => {
+    <nav className="flex flex-1 flex-col gap-1 px-3">
+      {navLinks.map((link) => {
         const active = pathname === link.href;
         return (
           <Link
             key={link.href}
             href={link.href}
-            className={`group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 ${
+            aria-current={active ? 'page' : undefined}
+            className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 ${
               active
-                ? 'bg-brand-50 text-brand-700'
-                : 'text-slate-500 hover:bg-slate-100/80 hover:text-slate-900'
+                ? 'bg-brand-600 text-white shadow-sm'
+                : 'text-brand-50/80 hover:bg-brand-700/60 hover:text-white'
             }`}
           >
             <svg
-              className={`h-4 w-4 ${active ? 'text-brand-600' : 'text-slate-400 group-hover:text-slate-500'}`}
+              className={`h-5 w-5 flex-shrink-0 ${
+                active ? 'text-white' : 'text-brand-200/70 group-hover:text-white'
+              }`}
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth={1.75}
