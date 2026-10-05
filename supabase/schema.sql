@@ -3,11 +3,30 @@
 -- messaging + journeys, compliant private feedback, segmentation, loyalty,
 -- and referrals on top of the original MVP tables. Additive only — nothing
 -- destructive. Run this file on a fresh project; existing projects should
--- run supabase/migrations/0001_retry_and_consent.sql followed by
--- supabase/migrations/0002_platform.sql.
+-- run supabase/migrations/0001_retry_and_consent.sql, then
+-- supabase/migrations/0002_platform.sql (this file), then
+-- supabase/migrations/0003_fix_missing_columns.sql.
+--
+-- PITFALL (fixed as of 0003, documented here so it isn't reintroduced):
+-- `create table if not exists` is a complete no-op if the table already
+-- exists — it does NOT add new columns to an existing table, even if the
+-- column is listed in the statement. Any column added to `businesses` or
+-- `customers` (both of which pre-date this platform build-out) after the
+-- table already existed in a given database must be added via an explicit
+-- `alter table ... add column if not exists`, not just by editing the
+-- `create table` statement below. New tables are unaffected by this and
+-- can keep using `create table if not exists` as normal.
+
 
 -- ---------------------------------------------------------------------------
 -- businesses
+--
+-- See the note on the `customers` table below for why brand_logo_url and
+-- brand_primary_color are added via explicit `alter table`, not just listed
+-- in the `create table` statement: `businesses` also pre-dates this version
+-- of the schema, so columns added only to the create-table statement here
+-- would silently never be created on this (or any already-provisioned)
+-- database.
 -- ---------------------------------------------------------------------------
 create table if not exists public.businesses (
   id uuid primary key default gen_random_uuid(),
@@ -15,12 +34,14 @@ create table if not exists public.businesses (
   name text not null default 'My Business',
   google_review_url text not null default '',
   delay_hours numeric not null default 2,
-  brand_logo_url text,
-  brand_primary_color text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (owner_id)
 );
+
+alter table public.businesses
+  add column if not exists brand_logo_url text,
+  add column if not exists brand_primary_color text;
 
 -- ---------------------------------------------------------------------------
 -- business_members
@@ -43,19 +64,34 @@ create index if not exists business_members_user_id_idx on public.business_membe
 
 -- ---------------------------------------------------------------------------
 -- customers
+--
+-- IMPORTANT: `create table if not exists` is a no-op on every column in
+-- this statement if the table already exists — Postgres does NOT retroactively
+-- add new columns to a pre-existing table this way. `customers` pre-dates
+-- this version of the schema (it existed in the original MVP), so phone,
+-- date_of_birth, source, and unsubscribed_sms_at are added explicitly below
+-- via `alter table ... add column if not exists`, which works correctly
+-- regardless of whether the table is new or pre-existing. Any future
+-- column added to this table MUST follow the same alter-table pattern, not
+-- just be added to the create-table statement above, or it will silently
+-- never be created on any database where `customers` already exists.
+-- (See supabase/migrations/0003_fix_missing_columns.sql for the incident
+-- this caused in production and the fix.)
 -- ---------------------------------------------------------------------------
 create table if not exists public.customers (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references public.businesses (id) on delete cascade,
   name text not null,
   email text not null,
-  phone text,
-  date_of_birth date,
-  source text,
   unsubscribed_at timestamptz,
-  unsubscribed_sms_at timestamptz,
   created_at timestamptz not null default now()
 );
+
+alter table public.customers
+  add column if not exists phone text,
+  add column if not exists date_of_birth date,
+  add column if not exists source text,
+  add column if not exists unsubscribed_sms_at timestamptz;
 
 create index if not exists customers_business_id_idx on public.customers (business_id);
 

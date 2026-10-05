@@ -126,12 +126,24 @@ fallback — not left out, but not fake either:
    + default journeys for any businesses that already exist.
    - `schema.sql` is idempotent (`create table if not exists`, `drop
      policy if exists` + `create policy`) — safe to run again on a
-     database that already has some of these tables.
-   - If you're upgrading from a database older than this version, run
-     [`supabase/migrations/0001_retry_and_consent.sql`](./supabase/migrations/0001_retry_and_consent.sql)
-     first, then run `schema.sql` in full (see
+     database that already has some of these tables. **Caveat:** this
+     idempotency only applies to whole tables. If a table already exists,
+     `create table if not exists` does not add any new columns to it, even
+     ones listed in the statement — this caused a production incident
+     where `customers.phone` (among other columns) was never created
+     because `customers` pre-dated this schema version. Columns added to
+     an already-existing table must ship as a separate `alter table ...
+     add column if not exists` migration (see 0003 below), not just be
+     added to this file's `create table` statement.
+   - If you're upgrading from a database older than this version, run, in
+     order: [`supabase/migrations/0001_retry_and_consent.sql`](./supabase/migrations/0001_retry_and_consent.sql),
+     then `schema.sql` in full (see
      [`supabase/migrations/0002_platform.sql`](./supabase/migrations/0002_platform.sql)
-     for why there's no separate incremental SQL file for this step).
+     for why there's no separate incremental SQL file for this step), then
+     [`supabase/migrations/0003_fix_missing_columns.sql`](./supabase/migrations/0003_fix_missing_columns.sql)
+     (adds columns that step 2 silently skips on tables that pre-date this
+     schema version — safe/required even if you believe you already ran
+     the full schema).
 3. From Project Settings → API, copy:
    - Project URL
    - `anon` public key
