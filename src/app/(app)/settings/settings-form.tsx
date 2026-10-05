@@ -70,19 +70,19 @@ export function SettingsForm({ business }: { business: Business }) {
           htmlFor="google_review_url"
           className="block text-sm font-medium text-slate-700"
         >
-          Google review URL
+          Google review URL <span className="font-normal text-slate-400">(optional)</span>
         </label>
         <input
           id="google_review_url"
           name="google_review_url"
           type="url"
-          required
           defaultValue={business.google_review_url}
           className={inputClasses}
           placeholder="https://g.page/r/your-place/review"
         />
         <p className="mt-1.5 text-xs text-slate-500">
-          Customers who click the review button in their email land here.
+          Customers who click the review button in their email land here. You can add this
+          later — review request emails just won't include a review link until it's set.
         </p>
       </div>
 

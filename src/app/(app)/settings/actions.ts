@@ -22,15 +22,13 @@ export async function saveSettings(
     return { error: 'Business name is required.' };
   }
 
-  if (!googleReviewUrl) {
-    return { error: 'Google review URL is required.' };
-  }
-
-  try {
-    // eslint-disable-next-line no-new
-    new URL(googleReviewUrl);
-  } catch {
-    return { error: 'Google review URL must be a valid URL (e.g. https://g.page/r/...).' };
+  if (googleReviewUrl) {
+    try {
+      // eslint-disable-next-line no-new
+      new URL(googleReviewUrl);
+    } catch {
+      return { error: 'Google review URL must be a valid URL (e.g. https://g.page/r/...).' };
+    }
   }
 
   if (!Number.isFinite(delayHours) || delayHours <= 0) {
