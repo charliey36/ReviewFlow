@@ -1,5 +1,34 @@
 # ReviewFlow
 
+ReviewFlow is a collaborative software project currently in development, designed to help service-based businesses automate customer reviews, retention and rebooking workflows.
+
+Built with:
+
+- Next.js 14
+- TypeScript
+- Supabase
+- PostgreSQL
+- Tailwind CSS
+- Vercel
+
+Key functionality includes:
+
+- Automated review requests
+- Customer rebooking reminders
+- Loyalty programmes
+- Referral tracking
+- Customer segmentation
+- Retention campaigns
+- Analytics and reporting
+
+Status: Active development.
+
+
+
+
+
+# Detailed Technical Documentation
+
 A platform for service businesses to automate review requests, rebooking
 reminders, and customer retention (loyalty, referrals, win-back campaigns),
 built on top of a channel-agnostic messaging engine and a small journey
