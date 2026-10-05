@@ -10,7 +10,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+      className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? 'Generating\u2026' : 'Generate code'}
     </button>
@@ -24,14 +24,14 @@ export function CreateReferralForm({ customers }: { customers: Customer[] }) {
     <div>
       <form action={formAction} className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label htmlFor="customer_id" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="customer_id" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
             Referring customer
           </label>
           <select
             id="customer_id"
             name="customer_id"
             required
-            className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+            className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
           >
             <option value="">Select a customer\u2026</option>
             {customers.map((customer) => (
@@ -45,12 +45,12 @@ export function CreateReferralForm({ customers }: { customers: Customer[] }) {
       </form>
 
       {state.error && (
-        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100">
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50">
           {state.error}
         </p>
       )}
       {state.success && state.code && (
-        <p className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700 ring-1 ring-inset ring-brand-100">
+        <p className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700 ring-1 ring-inset ring-brand-100 dark:bg-brand-950/40 dark:text-brand-300 dark:ring-brand-900/50">
           Referral code generated: <span className="font-mono font-semibold">{state.code}</span>
         </p>
       )}

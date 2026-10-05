@@ -49,63 +49,63 @@ export async function AdminBusinessesTable() {
   return (
     <div className="mt-8">
       <div className="flex items-center gap-2">
-        <h2 className="text-lg font-semibold tracking-tight text-slate-900">
+        <h2 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
           All registered businesses
         </h2>
-        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400">
           admin only
         </span>
       </div>
-      <p className="mt-1 text-sm text-slate-500">
+      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
         {rows.length} business{rows.length === 1 ? '' : 'es'} signed up.
       </p>
 
-      <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card">
-        <table className="min-w-full divide-y divide-slate-100">
-          <thead className="bg-slate-50/60">
+      <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-700">
+          <thead className="bg-slate-50/60 dark:bg-slate-800/60">
             <tr>
-              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Business
               </th>
-              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Owner email
               </th>
-              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Customers
               </th>
-              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Delay
               </th>
-              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Signed up
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
             {rows.length > 0 ? (
               rows.map((row) => (
-                <tr key={row.id} className="transition-colors hover:bg-slate-50/70">
-                  <td className="px-4 py-4 text-sm font-medium text-slate-900">
+                <tr key={row.id} className="transition-all duration-200 hover:bg-slate-50/70 dark:hover:bg-slate-700/50">
+                  <td className="px-4 py-4 text-sm font-medium text-slate-900 dark:text-white">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700">
+                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
                         {(row.name?.trim()?.[0] || '?').toUpperCase()}
                       </span>
                       {row.name || (
-                        <span className="italic text-slate-400">Unnamed business</span>
+                        <span className="italic text-slate-400 dark:text-slate-500">Unnamed business</span>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-sm text-slate-600">{row.ownerEmail}</td>
-                  <td className="px-4 py-4 text-sm text-slate-600">{row.customerCount}</td>
-                  <td className="px-4 py-4 text-sm text-slate-600">{row.delay_hours}h</td>
-                  <td className="px-4 py-4 text-sm text-slate-600">
+                  <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{row.ownerEmail}</td>
+                  <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{row.customerCount}</td>
+                  <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{row.delay_hours}h</td>
+                  <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">
                     {formatDateTime(row.created_at)}
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+                <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
                   No businesses registered yet.
                 </td>
               </tr>

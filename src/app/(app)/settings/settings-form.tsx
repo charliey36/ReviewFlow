@@ -10,7 +10,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? (
         'Saving\u2026'
@@ -38,7 +38,7 @@ function SubmitButton() {
 }
 
 const inputClasses =
-  'mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20';
+  'mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500';
 
 export function SettingsForm({ business }: { business: Business }) {
   const [state, formAction] = useFormState<SaveSettingsResult, FormData>(
@@ -49,7 +49,7 @@ export function SettingsForm({ business }: { business: Business }) {
   return (
     <form action={formAction} className="max-w-lg space-y-6">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Business name
         </label>
         <input
@@ -63,14 +63,14 @@ export function SettingsForm({ business }: { business: Business }) {
         />
       </div>
 
-      <div className="h-px bg-slate-100" />
+      <div className="h-px bg-slate-100 dark:bg-slate-700" />
 
       <div>
         <label
           htmlFor="google_review_url"
-          className="block text-sm font-medium text-slate-700"
+          className="block text-sm font-medium text-slate-700 dark:text-slate-300"
         >
-          Google review URL <span className="font-normal text-slate-400">(optional)</span>
+          Google review URL <span className="font-normal text-slate-400 dark:text-slate-500">(optional)</span>
         </label>
         <input
           id="google_review_url"
@@ -80,14 +80,14 @@ export function SettingsForm({ business }: { business: Business }) {
           className={inputClasses}
           placeholder="https://g.page/r/your-place/review"
         />
-        <p className="mt-1.5 text-xs text-slate-500">
+        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
           Customers who click the review button in their email land here. You can add this
           later — review request emails just won't include a review link until it's set.
         </p>
       </div>
 
       <div>
-        <label htmlFor="delay_hours" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="delay_hours" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Send delay (hours)
         </label>
         <input
@@ -100,18 +100,18 @@ export function SettingsForm({ business }: { business: Business }) {
           defaultValue={business.delay_hours}
           className={`${inputClasses} w-40`}
         />
-        <p className="mt-1.5 text-xs text-slate-500">
+        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
           How long after a customer is added before the review request email is sent.
         </p>
       </div>
 
       {state.error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100">
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50">
           {state.error}
         </p>
       )}
       {state.success && (
-        <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700 ring-1 ring-inset ring-brand-100">
+        <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700 ring-1 ring-inset ring-brand-100 dark:bg-brand-950/40 dark:text-brand-300 dark:ring-brand-900/50">
           Settings saved.
         </p>
       )}

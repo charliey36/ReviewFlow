@@ -42,14 +42,14 @@ export default async function SegmentsPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Segments</h1>
-      <p className="mt-1.5 text-sm text-slate-500">
+      <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Segments</h1>
+      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
         Dynamic customer segments, evaluated live from visit history, spend, and tags — not a
         static list that goes stale.
       </p>
 
-      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card">
-        <h2 className="text-sm font-semibold text-slate-900">Create a segment</h2>
+      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Create a segment</h2>
         <div className="mt-4">
           <CreateSegmentForm />
         </div>
@@ -62,18 +62,18 @@ export default async function SegmentsPage() {
             return (
               <div
                 key={segment.id}
-                className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card"
+                className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-white p-5 shadow-md dark:border-slate-700/70 dark:bg-surface-card"
               >
                 <div>
-                  <p className="text-sm font-medium text-slate-900">{segment.name}</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">{segment.name}</p>
                   {condition && (
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                       {fieldLabels[condition.field]} {operatorLabels[condition.operator]} {condition.value}
                     </p>
                   )}
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                     {segment.memberCount} customer{segment.memberCount === 1 ? '' : 's'}
                   </span>
                   <DeleteSegmentButton segmentId={segment.id} />
@@ -82,9 +82,9 @@ export default async function SegmentsPage() {
             );
           })
         ) : (
-          <div className="rounded-2xl border border-slate-200/70 bg-white p-10 text-center shadow-card">
-            <p className="text-sm font-medium text-slate-600">No segments yet</p>
-            <p className="mt-1 text-sm text-slate-400">Create one above to get started.</p>
+          <div className="rounded-2xl border border-slate-200/70 bg-white p-10 text-center shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">No segments yet</p>
+            <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">Create one above to get started.</p>
           </div>
         )}
       </div>

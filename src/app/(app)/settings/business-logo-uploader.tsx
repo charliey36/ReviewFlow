@@ -55,7 +55,7 @@ export function BusinessLogoUploader({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           aria-label="Change business profile picture"
-          className="group relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-xl font-semibold text-brand-700 ring-1 ring-inset ring-brand-100 transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+          className="group relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-xl font-semibold text-brand-700 ring-1 ring-inset ring-brand-100 transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-brand-900/40 dark:text-brand-300 dark:ring-brand-900/50"
         >
           {displaySrc ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -99,12 +99,12 @@ export function BusinessLogoUploader({
       </form>
 
       <div className="text-sm">
-        <p className="font-medium text-slate-700">Profile picture</p>
-        <p className="mt-0.5 text-slate-500">
+        <p className="font-medium text-slate-700 dark:text-slate-300">Profile picture</p>
+        <p className="mt-0.5 text-slate-500 dark:text-slate-400">
           Click the circle to upload a PNG, JPEG, or WEBP, up to 2 MB.
         </p>
-        {state.error && <p className="mt-1 text-red-700">{state.error}</p>}
-        {state.success && !state.error && <p className="mt-1 text-brand-700">Profile picture updated.</p>}
+        {state.error && <p className="mt-1 text-red-700 dark:text-red-400">{state.error}</p>}
+        {state.success && !state.error && <p className="mt-1 text-brand-700 dark:text-brand-400">Profile picture updated.</p>}
       </div>
     </div>
   );

@@ -11,18 +11,18 @@ function formatDateTime(value: string) {
 }
 
 const statusStyles: Record<string, string> = {
-  pending: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-100',
-  sent: 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100',
-  failed: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-100',
-  cancelled: 'bg-slate-100 text-slate-500 ring-1 ring-inset ring-slate-200',
+  pending: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/50',
+  sent: 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100 dark:bg-brand-950/40 dark:text-brand-300 dark:ring-brand-900/50',
+  failed: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50',
+  cancelled: 'bg-slate-100 text-slate-500 ring-1 ring-inset ring-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700',
 };
 
 const avatarPalette = [
-  'bg-brand-50 text-brand-700',
-  'bg-sky-50 text-sky-700',
-  'bg-violet-50 text-violet-700',
-  'bg-amber-50 text-amber-700',
-  'bg-rose-50 text-rose-700',
+  'bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300',
+  'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300',
+  'bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300',
+  'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',
+  'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300',
 ];
 
 function avatarTone(seed: string) {
@@ -47,25 +47,25 @@ export default async function CustomersPage() {
   return (
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Customers</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Customers</h1>
         <div className="flex items-center gap-4">
-          <Link href="/customers/import" className="text-sm font-medium text-brand-700 hover:underline">
+          <Link href="/customers/import" className="text-sm font-medium text-brand-700 transition-all duration-200 hover:underline dark:text-brand-400">
             Import CSV
           </Link>
-          <span className="text-sm text-slate-400">
+          <span className="text-sm text-slate-400 dark:text-slate-500">
             {customers?.length ?? 0} total
           </span>
         </div>
       </div>
-      <p className="mt-1.5 text-sm text-slate-500">
+      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
         Add a customer to automatically schedule a review request email.
       </p>
 
-      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card">
+      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
         <div className="mb-4 flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/40">
             <svg
-              className="h-4.5 w-4.5 text-brand-600"
+              className="h-4.5 w-4.5 text-brand-600 dark:text-brand-400"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth={1.75}
@@ -75,30 +75,30 @@ export default async function CustomersPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
           </span>
-          <h2 className="text-sm font-semibold text-slate-900">Add a customer</h2>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Add a customer</h2>
         </div>
         <AddCustomerForm />
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card">
-        <table className="min-w-full divide-y divide-slate-100">
-          <thead className="bg-slate-50/60">
+      <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-700">
+          <thead className="bg-slate-50/60 dark:bg-slate-800/60">
             <tr>
-              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Name
               </th>
-              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Email
               </th>
-              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Added
               </th>
-              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Review request
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
             {customers && customers.length > 0 ? (
               customers.map((customer) => {
                 const request = Array.isArray(customer.review_requests)
@@ -106,8 +106,8 @@ export default async function CustomersPage() {
                   : customer.review_requests;
 
                 return (
-                  <tr key={customer.id} className="transition-colors hover:bg-slate-50/70">
-                    <td className="px-4 py-4 text-sm font-medium text-slate-900">
+                  <tr key={customer.id} className="transition-all duration-200 hover:bg-slate-50/70 dark:hover:bg-slate-700">
+                    <td className="px-4 py-4 text-sm font-medium text-slate-900 dark:text-white">
                       <Link href={`/customers/${customer.id}`} className="flex items-center gap-3 hover:underline">
                         <span
                           className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold ${avatarTone(customer.name)}`}
@@ -117,8 +117,8 @@ export default async function CustomersPage() {
                         {customer.name}
                       </Link>
                     </td>
-                    <td className="px-4 py-4 text-sm text-slate-600">{customer.email}</td>
-                    <td className="px-4 py-4 text-sm text-slate-600">
+                    <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{customer.email}</td>
+                    <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">
                       {formatDateTime(customer.created_at)}
                     </td>
                     <td className="px-4 py-4 text-sm">
@@ -126,19 +126,19 @@ export default async function CustomersPage() {
                         <div className="flex flex-col gap-1">
                           <span
                             className={`inline-block w-fit rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
-                              statusStyles[request.status] ?? 'bg-slate-100 text-slate-600'
+                              statusStyles[request.status] ?? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
                             }`}
                           >
                             {request.status}
                           </span>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
                             {request.status === 'sent' && request.sent_at
                               ? `Sent ${formatDateTime(request.sent_at)}`
                               : `Due ${formatDateTime(request.send_at)}`}
                           </span>
                         </div>
                       ) : (
-                        <span className="text-xs text-slate-400">No request scheduled</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500">No request scheduled</span>
                       )}
                     </td>
                   </tr>
@@ -148,9 +148,9 @@ export default async function CustomersPage() {
               <tr>
                 <td colSpan={4} className="px-4 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
-                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
                       <svg
-                        className="h-6 w-6 text-slate-400"
+                        className="h-6 w-6 text-slate-400 dark:text-slate-500"
                         fill="none"
                         viewBox="0 0 24 24"
                         strokeWidth={1.5}
@@ -164,8 +164,8 @@ export default async function CustomersPage() {
                         />
                       </svg>
                     </span>
-                    <p className="text-sm font-medium text-slate-600">No customers yet</p>
-                    <p className="text-sm text-slate-400">Add your first one above.</p>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">No customers yet</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500">Add your first one above.</p>
                   </div>
                 </td>
               </tr>

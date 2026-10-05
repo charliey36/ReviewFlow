@@ -3,10 +3,10 @@ import { createClient } from '@/lib/supabase/server';
 import { computeRebookingRate, computeRevenueAttribution, computeHealthScore } from '@/lib/health';
 
 const tierStyles: Record<string, string> = {
-  thriving: 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100',
-  steady: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-100',
-  at_risk: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-100',
-  lapsed: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-100',
+  thriving: 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100 dark:bg-brand-950/40 dark:text-brand-300 dark:ring-brand-900/50',
+  steady: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-900/50',
+  at_risk: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/50',
+  lapsed: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50',
 };
 
 export default async function AnalyticsPage() {
@@ -35,22 +35,22 @@ export default async function AnalyticsPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Analytics</h1>
-      <p className="mt-1.5 text-sm text-slate-500">
+      <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Analytics</h1>
+      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
         Rebooking rate, revenue influenced by automated messages, and customer health distribution.
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card">
-          <p className="text-sm font-medium text-slate-500">30-day rebooking rate</p>
+        <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">30-day rebooking rate</p>
           {rebookingRate.rate === null ? (
-            <p className="mt-3 text-sm text-slate-400">Not enough visit data yet.</p>
+            <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">Not enough visit data yet.</p>
           ) : (
             <>
-              <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-slate-900">
+              <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
                 {rebookingRate.rate}%
               </p>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                 {rebookingRate.rebookedWithin30Days} of {rebookingRate.completedVisits} visits led to a rebooking
                 within 30 days. Industry benchmark: 60\u201380% is considered healthy.
               </p>
@@ -58,12 +58,12 @@ export default async function AnalyticsPage() {
           )}
         </div>
 
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card">
-          <p className="text-sm font-medium text-slate-500">Revenue from rebooking reminders</p>
-          <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-slate-900">
+        <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Revenue from rebooking reminders</p>
+          <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
             ${revenueAttribution.totalAttributed.toFixed(2)}
           </p>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
             {revenueAttribution.attributedVisitCount} visit{revenueAttribution.attributedVisitCount === 1 ? '' : 's'}{' '}
             within 7 days of a rebooking reminder click. Estimate based on click-to-visit timing, not perfect
             ground truth.
@@ -71,8 +71,8 @@ export default async function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card">
-        <h2 className="text-sm font-semibold text-slate-900">Customer health distribution</h2>
+      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Customer health distribution</h2>
         <div className="mt-4 flex flex-wrap gap-3">
           {Object.entries(healthTierCounts).map(([tier, count]) => (
             <span key={tier} className={`rounded-full px-3 py-1.5 text-sm font-medium capitalize ${tierStyles[tier]}`}>
@@ -80,7 +80,7 @@ export default async function AnalyticsPage() {
             </span>
           ))}
         </div>
-        <p className="mt-3 text-xs text-slate-400">
+        <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
           Based on recency, frequency, and spend of visits (not click/review activity). Customers with no logged
           visits are excluded.
         </p>

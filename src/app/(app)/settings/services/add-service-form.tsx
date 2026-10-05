@@ -10,7 +10,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? 'Adding\u2026' : 'Add service'}
     </button>
@@ -18,7 +18,7 @@ function SubmitButton() {
 }
 
 const inputClasses =
-  'mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20';
+  'mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500';
 
 export function AddServiceForm() {
   const [state, formAction] = useFormState<ServiceFormResult, FormData>(createService, {});
@@ -31,14 +31,14 @@ export function AddServiceForm() {
   return (
     <form ref={formRef} action={formAction} className="grid grid-cols-1 gap-3 sm:grid-cols-4 sm:items-end">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Service name
         </label>
         <input id="name" name="name" type="text" required className={inputClasses} placeholder="Haircut" />
       </div>
 
       <div>
-        <label htmlFor="recurrence_interval_days" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="recurrence_interval_days" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Rebook after (days)
         </label>
         <input
@@ -52,7 +52,7 @@ export function AddServiceForm() {
       </div>
 
       <div>
-        <label htmlFor="default_price" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="default_price" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Default price
         </label>
         <input
@@ -69,7 +69,7 @@ export function AddServiceForm() {
       <SubmitButton />
 
       {state.error && (
-        <p className="sm:col-span-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100">
+        <p className="sm:col-span-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50">
           {state.error}
         </p>
       )}

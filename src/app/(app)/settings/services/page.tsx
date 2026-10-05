@@ -16,44 +16,44 @@ export default async function ServicesPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Services</h1>
-      <p className="mt-1.5 text-sm text-slate-500">
+      <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Services</h1>
+      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
         Define your services and how often customers typically need to rebook. This drives
         automated rebooking reminders on the customer detail page.
       </p>
 
-      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card">
-        <h2 className="text-sm font-semibold text-slate-900">Add a service</h2>
+      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Add a service</h2>
         <div className="mt-4">
           <AddServiceForm />
         </div>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card">
-        <table className="min-w-full divide-y divide-slate-100">
-          <thead className="bg-slate-50/60">
+      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-700">
+          <thead className="bg-slate-50/60 dark:bg-slate-800/60">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Name
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Rebook after
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Default price
               </th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
             {services && services.length > 0 ? (
               services.map((service) => (
                 <tr key={service.id}>
-                  <td className="px-4 py-3 text-sm font-medium text-slate-900">{service.name}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
+                  <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">{service.name}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                     {service.recurrence_interval_days ? `${service.recurrence_interval_days} days` : '\u2014'}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                     {service.default_price != null ? `$${service.default_price.toFixed(2)}` : '\u2014'}
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -63,7 +63,7 @@ export default async function ServicesPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-400">
+                <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-400 dark:text-slate-500">
                   No services yet. Add one above.
                 </td>
               </tr>

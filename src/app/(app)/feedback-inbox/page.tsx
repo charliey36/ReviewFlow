@@ -26,8 +26,8 @@ export default async function FeedbackInboxPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Feedback inbox</h1>
-      <p className="mt-1.5 text-sm text-slate-500">
+      <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Feedback inbox</h1>
+      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
         Private feedback customers chose to share directly with you instead of (or alongside) a
         public review.
       </p>

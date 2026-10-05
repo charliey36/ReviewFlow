@@ -11,10 +11,10 @@ export function SidebarToggleButton() {
       onClick={toggle}
       aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
       aria-expanded={isOpen}
-      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
     >
       <svg
-        className="h-6 w-6"
+        className="h-6 w-6 transition-transform duration-200"
         fill="none"
         viewBox="0 0 24 24"
         strokeWidth={1.75}

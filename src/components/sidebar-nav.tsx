@@ -84,6 +84,17 @@ export const navLinks = [
       </>
     ),
   },
+  {
+    href: '/how-it-works',
+    label: 'How It Works',
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"
+      />
+    ),
+  },
 ];
 
 /**
@@ -95,7 +106,7 @@ export function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-1 flex-col gap-1 px-3">
+    <nav className="flex flex-1 flex-col gap-1 px-3 py-2">
       {navLinks.map((link) => {
         const active = pathname === link.href;
         return (
@@ -103,15 +114,25 @@ export function SidebarNav() {
             key={link.href}
             href={link.href}
             aria-current={active ? 'page' : undefined}
-            className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 ${
+            className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
               active
-                ? 'bg-brand-600 text-white shadow-sm'
-                : 'text-brand-50/80 hover:bg-brand-700/60 hover:text-white'
+                ? 'bg-brand-500 text-white shadow-sm dark:bg-brand-500'
+                : 'text-brand-50/80 hover:bg-brand-700/60 hover:text-white dark:text-slate-300 dark:hover:bg-slate-700/60 dark:hover:text-white'
             }`}
           >
+            {/* Active indicator bar for a clearer current-page cue beyond
+                just the background fill. */}
+            <span
+              aria-hidden="true"
+              className={`absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-white transition-opacity duration-200 ${
+                active ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
             <svg
-              className={`h-5 w-5 flex-shrink-0 ${
-                active ? 'text-white' : 'text-brand-200/70 group-hover:text-white'
+              className={`h-5 w-5 flex-shrink-0 transition-transform duration-200 ${
+                active
+                  ? 'scale-110 text-white'
+                  : 'text-brand-200/70 group-hover:scale-110 group-hover:text-white dark:text-slate-400 dark:group-hover:text-white'
               }`}
               fill="none"
               viewBox="0 0 24 24"

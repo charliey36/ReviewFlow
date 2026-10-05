@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   content: [
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -18,6 +19,16 @@ module.exports = {
           700: '#137333',
           800: '#0f5c29',
           900: '#0b451f',
+        },
+        /* Dark mode surface palette (recommended SaaS slate-navy scale).
+           Named semantically so page markup reads as intent ("dark:bg-
+           surface-card") rather than raw hex/slate-shade guesswork, and so
+           the palette can be retuned in one place later if needed. */
+        surface: {
+          bg: '#0f172a',
+          DEFAULT: '#1e293b',
+          sidebar: '#111827',
+          card: '#1f2937',
         },
       },
       boxShadow: {

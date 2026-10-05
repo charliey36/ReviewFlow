@@ -6,7 +6,7 @@ export function DeactivateServiceButton({ serviceId }: { serviceId: string }) {
   return (
     <button
       onClick={() => deactivateService(serviceId)}
-      className="text-xs font-medium text-slate-400 hover:text-red-600"
+      className="text-xs font-medium text-slate-400 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400"
     >
       Remove
     </button>

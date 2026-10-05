@@ -37,92 +37,92 @@ export default async function CustomerDetailPage({ params }: { params: { custome
 
   return (
     <div>
-      <Link href="/customers" className="text-sm font-medium text-brand-700 hover:underline">
+      <Link href="/customers" className="text-sm font-medium text-brand-700 transition-all duration-200 hover:underline dark:text-brand-400">
         &larr; Back to customers
       </Link>
 
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">{customer.name}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">{customer.name}</h1>
         {rebookingStatus.isLapsed && (
-          <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-100">
+          <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50">
             Lapsed
           </span>
         )}
         {!rebookingStatus.isLapsed && rebookingStatus.isDue && (
-          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-100">
+          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/50">
             Due for rebooking
           </span>
         )}
       </div>
-      <p className="mt-1 text-sm text-slate-500">
+      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
         {customer.email} {customer.phone ? `· ${customer.phone}` : ''}
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card">
-          <p className="text-sm font-medium text-slate-500">Lifetime value</p>
-          <p className="mt-2 text-2xl font-bold tabular-nums tracking-tight text-slate-900">
+        <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Lifetime value</p>
+          <p className="mt-2 text-2xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
             ${lifetimeValue.toFixed(2)}
           </p>
         </div>
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card">
-          <p className="text-sm font-medium text-slate-500">Next expected visit</p>
-          <p className="mt-2 text-2xl font-bold tabular-nums tracking-tight text-slate-900">
+        <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Next expected visit</p>
+          <p className="mt-2 text-2xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
             {rebookingStatus.nextExpectedVisitAt ? formatDate(rebookingStatus.nextExpectedVisitAt.toISOString()) : '\u2014'}
           </p>
         </div>
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card">
-          <p className="text-sm font-medium text-slate-500">Loyalty points</p>
-          <p className="mt-2 text-2xl font-bold tabular-nums tracking-tight text-slate-900">
+        <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Loyalty points</p>
+          <p className="mt-2 text-2xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
             {loyaltyProgram?.is_active ? loyaltyBalance : '\u2014'}
           </p>
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card">
-        <h2 className="text-sm font-semibold text-slate-900">Tags</h2>
+      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Tags</h2>
         <div className="mt-3">
           <TagEditor customerId={customer.id} tags={tags ?? []} />
         </div>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card">
-        <h2 className="text-sm font-semibold text-slate-900">Log a visit</h2>
+      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Log a visit</h2>
         <div className="mt-4">
           <LogVisitForm customerId={customer.id} services={services ?? []} />
         </div>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card">
-        <div className="border-b border-slate-100 px-6 py-4">
-          <h2 className="text-sm font-semibold text-slate-900">Visit history</h2>
+      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+        <div className="border-b border-slate-100 px-6 py-4 dark:border-slate-700">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Visit history</h2>
         </div>
-        <table className="min-w-full divide-y divide-slate-100">
-          <thead className="bg-slate-50/60">
+        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-700">
+          <thead className="bg-slate-50/60 dark:bg-slate-800/60">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Date</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Service</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Price</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500">Notes</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Date</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Service</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Price</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Notes</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
             {visits.length > 0 ? (
               visits.map((visit) => (
                 <tr key={visit.id}>
-                  <td className="px-4 py-3 text-sm text-slate-600">{formatDate(visit.visited_at)}</td>
-                  <td className="px-4 py-3 text-sm text-slate-900">
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{formatDate(visit.visited_at)}</td>
+                  <td className="px-4 py-3 text-sm text-slate-900 dark:text-white">
                     {visit.service_id ? servicesById.get(visit.service_id)?.name ?? 'Unknown service' : 'General visit'}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
+                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                     {visit.price != null ? `$${visit.price.toFixed(2)}` : '\u2014'}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-500">{visit.notes ?? '\u2014'}</td>
+                  <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">{visit.notes ?? '\u2014'}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-400">
+                <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-400 dark:text-slate-500">
                   No visits logged yet.
                 </td>
               </tr>

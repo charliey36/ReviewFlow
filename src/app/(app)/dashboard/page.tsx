@@ -4,10 +4,10 @@ import { AdminBusinessesTable } from './admin-businesses-table';
 
 type StatTone = 'brand' | 'blue' | 'violet';
 
-const toneStyles: Record<StatTone, { chip: string; icon: string }> = {
-  brand: { chip: 'bg-brand-50', icon: 'text-brand-600' },
-  blue: { chip: 'bg-sky-50', icon: 'text-sky-600' },
-  violet: { chip: 'bg-violet-50', icon: 'text-violet-600' },
+const toneStyles: Record<StatTone, { chip: string; icon: string; chipDark: string; iconDark: string }> = {
+  brand: { chip: 'bg-brand-50', icon: 'text-brand-600', chipDark: 'dark:bg-brand-900/40', iconDark: 'dark:text-brand-400' },
+  blue: { chip: 'bg-sky-50', icon: 'text-sky-600', chipDark: 'dark:bg-sky-900/40', iconDark: 'dark:text-sky-400' },
+  violet: { chip: 'bg-violet-50', icon: 'text-violet-600', chipDark: 'dark:bg-violet-900/40', iconDark: 'dark:text-violet-400' },
 };
 
 function StatCard({
@@ -23,12 +23,12 @@ function StatCard({
 }) {
   const styles = toneStyles[tone];
   return (
-    <div className="group rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-card-hover">
+    <div className="group rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover dark:border-slate-700/70 dark:bg-surface-card">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-slate-500">{label}</p>
-        <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${styles.chip}`}>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
+        <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${styles.chip} ${styles.chipDark}`}>
           <svg
-            className={`h-5 w-5 ${styles.icon}`}
+            className={`h-5 w-5 ${styles.icon} ${styles.iconDark}`}
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.75}
@@ -39,31 +39,12 @@ function StatCard({
           </svg>
         </span>
       </div>
-      <p className="mt-4 text-4xl font-bold tabular-nums tracking-tight text-slate-900">
+      <p className="mt-4 text-4xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
         {value}
       </p>
     </div>
   );
 }
-
-const steps = [
-  {
-    title: 'Add a customer',
-    description: 'Add a customer on the Customers page.',
-  },
-  {
-    title: 'Request scheduled',
-    description: 'A review request is scheduled automatically after your chosen delay.',
-  },
-  {
-    title: 'Email sent',
-    description: 'The scheduled job sends the email once it\u2019s due.',
-  },
-  {
-    title: 'Click tracked',
-    description: 'Clicking the button in the email is tracked here, then redirects to your Google review page.',
-  },
-];
 
 export default async function DashboardPage() {
   const business = await requireBusiness();
@@ -111,20 +92,20 @@ export default async function DashboardPage() {
   return (
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Dashboard</h1>
-        <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Dashboard</h1>
+        <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
           {business.name}
         </span>
       </div>
-      <p className="mt-1.5 text-sm text-slate-500">
+      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
         A quick look at how {business.name} is doing with review requests.
       </p>
 
       {!hasReviewUrl && (
-        <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50/70 px-4 py-3.5 text-sm text-amber-900 shadow-sm">
-          <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-amber-100">
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50/70 px-4 py-3.5 text-sm text-amber-900 shadow-sm dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+          <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/50">
             <svg
-              className="h-3.5 w-3.5 text-amber-600"
+              className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth={2.25}
@@ -187,36 +168,36 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card">
+      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">Review request funnel</h2>
-          <span className="text-xs text-slate-400">All time</span>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Review request funnel</h2>
+          <span className="text-xs text-slate-400 dark:text-slate-500">All time</span>
         </div>
 
         {sent === 0 ? (
-          <p className="mt-4 text-sm text-slate-500">
+          <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
             Not enough data yet — send some review requests to see your conversion rate here.
           </p>
         ) : (
           <>
             <div className="mt-5 flex items-center gap-4">
               <div className="flex-1">
-                <div className="flex items-baseline justify-between text-xs text-slate-500">
+                <div className="flex items-baseline justify-between text-xs text-slate-500 dark:text-slate-400">
                   <span>Sent</span>
                   <span>{sent}</span>
                 </div>
-                <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
                   <div className="h-full w-full rounded-full bg-sky-500" />
                 </div>
               </div>
             </div>
             <div className="mt-4 flex items-center gap-4">
               <div className="flex-1">
-                <div className="flex items-baseline justify-between text-xs text-slate-500">
+                <div className="flex items-baseline justify-between text-xs text-slate-500 dark:text-slate-400">
                   <span>Clicked</span>
                   <span>{clicks}</span>
                 </div>
-                <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
                   <div
                     className="h-full rounded-full bg-violet-500"
                     style={{ width: `${Math.min(100, clickRate ?? 0)}%` }}
@@ -225,13 +206,13 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            <p className="mt-4 text-sm text-slate-600">
-              <span className="text-2xl font-bold tabular-nums tracking-tight text-slate-900">
+            <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
+              <span className="text-2xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
                 {clickRate}%
               </span>{' '}
               click-through rate on sent review requests.
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
               Measures clicks on the review link, not confirmed reviews left on Google — ReviewFlow
               can&apos;t see that outcome once a customer leaves the tracking redirect.
             </p>
@@ -239,14 +220,14 @@ export default async function DashboardPage() {
         )}
 
         {((pendingCount.count ?? 0) > 0 || (failedCount.count ?? 0) > 0) && (
-          <div className="mt-5 flex flex-wrap gap-3 border-t border-slate-100 pt-4">
+          <div className="mt-5 flex flex-wrap gap-3 border-t border-slate-100 pt-4 dark:border-slate-700">
             {(pendingCount.count ?? 0) > 0 && (
-              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-100">
+              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/50">
                 {pendingCount.count} pending
               </span>
             )}
             {(failedCount.count ?? 0) > 0 && (
-              <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-100">
+              <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50">
                 {failedCount.count} failed after retries
               </span>
             )}
@@ -254,25 +235,19 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      <div className="mt-8 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card">
-        <h2 className="text-sm font-semibold text-slate-900">How it works</h2>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {steps.map((step, index) => (
-            <div key={step.title} className="flex gap-3">
-              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700">
-                {index + 1}
-              </span>
-              <div>
-                <p className="text-sm font-medium text-slate-800">
-                  {step.title === 'Request scheduled'
-                    ? `Request scheduled (${business.delay_hours}h delay)`
-                    : step.title}
-                </p>
-                <p className="mt-0.5 text-sm text-slate-500">{step.description}</p>
-              </div>
-            </div>
-          ))}
+      <div className="mt-8 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">New to ReviewFlow?</h2>
+          <a
+            href="/how-it-works"
+            className="text-sm font-medium text-brand-700 transition-colors duration-200 hover:underline dark:text-brand-400"
+          >
+            See how it works &rarr;
+          </a>
         </div>
+        <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+          A quick walkthrough of what happens automatically after you add a customer.
+        </p>
       </div>
 
       {isAdmin && <AdminBusinessesTable />}

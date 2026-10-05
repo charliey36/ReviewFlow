@@ -9,7 +9,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+      className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? 'Creating\u2026' : 'Create segment'}
     </button>
@@ -17,7 +17,7 @@ function SubmitButton() {
 }
 
 const inputClasses =
-  'mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20';
+  'mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500';
 
 export function CreateSegmentForm() {
   const [state, formAction] = useFormState<SegmentFormResult, FormData>(createSegment, {});
@@ -25,14 +25,14 @@ export function CreateSegmentForm() {
   return (
     <form action={formAction} className="grid grid-cols-1 gap-3 sm:grid-cols-5 sm:items-end">
       <div className="sm:col-span-2">
-        <label htmlFor="name" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Segment name
         </label>
         <input id="name" name="name" type="text" required className={inputClasses} placeholder="Lapsed high-value" />
       </div>
 
       <div>
-        <label htmlFor="field" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="field" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Field
         </label>
         <select id="field" name="field" className={inputClasses} defaultValue="days_since_last_visit">
@@ -44,7 +44,7 @@ export function CreateSegmentForm() {
       </div>
 
       <div>
-        <label htmlFor="operator" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="operator" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Operator
         </label>
         <select id="operator" name="operator" className={inputClasses} defaultValue="gte">
@@ -57,7 +57,7 @@ export function CreateSegmentForm() {
       </div>
 
       <div>
-        <label htmlFor="value" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="value" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Value
         </label>
         <input id="value" name="value" type="text" required className={inputClasses} placeholder="60" />
@@ -68,7 +68,7 @@ export function CreateSegmentForm() {
       </div>
 
       {state.error && (
-        <p className="sm:col-span-5 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100">
+        <p className="sm:col-span-5 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50">
           {state.error}
         </p>
       )}
