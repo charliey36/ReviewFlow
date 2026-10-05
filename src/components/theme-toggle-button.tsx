@@ -15,7 +15,7 @@ export function ThemeToggleButton() {
     >
       {isDark ? (
         <svg
-          className="h-5 w-5"
+          className="h-5 w-5 text-amber-500 dark:text-amber-400"
           fill="none"
           viewBox="0 0 24 24"
           strokeWidth={1.75}
