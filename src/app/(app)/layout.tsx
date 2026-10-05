@@ -49,8 +49,13 @@ export default async function AppLayout({
 
               <div className="flex items-center gap-3">
                 <div className="hidden items-center gap-2.5 sm:flex">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700 ring-1 ring-inset ring-brand-100">
-                    {initials}
+                  <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-xs font-semibold text-brand-700 ring-1 ring-inset ring-brand-100">
+                    {business.brand_logo_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={business.brand_logo_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span aria-hidden="true">{initials}</span>
+                    )}
                   </span>
                   <span className="text-sm font-medium text-slate-700">{business.name}</span>
                 </div>

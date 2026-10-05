@@ -5,7 +5,12 @@
 -- destructive. Run this file on a fresh project; existing projects should
 -- run supabase/migrations/0001_retry_and_consent.sql, then
 -- supabase/migrations/0002_platform.sql (this file), then
--- supabase/migrations/0003_fix_missing_columns.sql.
+-- supabase/migrations/0003_fix_missing_columns.sql. All projects (fresh or
+-- existing) additionally need supabase/migrations/0004_business_logo_storage.sql,
+-- which creates the public `business-logos` Storage bucket used by the
+-- Settings page's profile picture uploader — storage buckets/policies
+-- aren't part of this schema.sql file at all, since `storage.objects` lives
+-- outside the `public` schema this file otherwise manages.
 --
 -- PITFALL (fixed as of 0003, documented here so it isn't reintroduced):
 -- `create table if not exists` is a complete no-op if the table already

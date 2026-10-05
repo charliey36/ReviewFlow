@@ -54,3 +54,76 @@ export async function saveSettings(
   revalidatePath('/dashboard');
   return { success: true };
 }
+
+export type UploadLogoResult = { error?: string; success?: boolean; logoUrl?: string };
+
+const MAX_LOGO_BYTES = 2 * 1024 * 1024; // 2 MB
+const ALLOWED_LOGO_TYPES: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+};
+
+/**
+ * Uploads a new profile picture / logo for the business to the
+ * `business-logos` Storage bucket (see
+ * supabase/migrations/0004_business_logo_storage.sql) and saves the
+ * resulting public URL on businesses.brand_logo_url. Storage object path is
+ * "<business_id>/logo.<ext>" so re-uploading overwrites the previous file
+ * instead of accumulating orphaned images, and so the storage RLS policies
+ * can authorize access by checking the business_id folder segment against
+ * business_members.
+ */
+export async function uploadBusinessLogo(
+  _prev: UploadLogoResult,
+  formData: FormData
+): Promise<UploadLogoResult> {
+  const business = await requireBusiness();
+  const supabase = createClient();
+
+  const file = formData.get('logo');
+
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: 'Choose an image to upload.' };
+  }
+
+  const extension = ALLOWED_LOGO_TYPES[file.type];
+  if (!extension) {
+    return { error: 'Image must be a PNG, JPEG, or WEBP file.' };
+  }
+
+  if (file.size > MAX_LOGO_BYTES) {
+    return { error: 'Image must be smaller than 2 MB.' };
+  }
+
+  const path = `${business.id}/logo.${extension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('business-logos')
+    .upload(path, file, { contentType: file.type, upsert: true });
+
+  if (uploadError) {
+    return { error: `Failed to upload image: ${uploadError.message}` };
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from('business-logos').getPublicUrl(path);
+
+  // Cache-bust so the new image shows immediately even though the path is
+  // the same as any previous upload.
+  const logoUrl = `${publicUrl}?v=${Date.now()}`;
+
+  const { error: updateError } = await supabase
+    .from('businesses')
+    .update({ brand_logo_url: logoUrl })
+    .eq('id', business.id);
+
+  if (updateError) {
+    return { error: `Failed to save image: ${updateError.message}` };
+  }
+
+  revalidatePath('/settings');
+  revalidatePath('/dashboard');
+  return { success: true, logoUrl };
+}

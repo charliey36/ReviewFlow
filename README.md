@@ -143,7 +143,10 @@ fallback — not left out, but not fake either:
      [`supabase/migrations/0003_fix_missing_columns.sql`](./supabase/migrations/0003_fix_missing_columns.sql)
      (adds columns that step 2 silently skips on tables that pre-date this
      schema version — safe/required even if you believe you already ran
-     the full schema).
+     the full schema), then
+     [`supabase/migrations/0004_business_logo_storage.sql`](./supabase/migrations/0004_business_logo_storage.sql)
+     (creates the public `business-logos` Storage bucket and its RLS
+     policies, used by the profile picture uploader in Settings).
 3. From Project Settings → API, copy:
    - Project URL
    - `anon` public key
