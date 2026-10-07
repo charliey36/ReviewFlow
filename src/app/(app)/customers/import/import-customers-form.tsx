@@ -1,22 +1,14 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useState } from 'react';
+import { useFormState } from 'react-dom';
+import { Badge } from '@/components/ui/badge';
+import { Icon } from '@/components/ui/icons';
+import { Notice } from '@/components/ui/notice';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { importCustomers, type ImportCustomersResult } from './actions';
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {pending ? 'Importing\u2026' : 'Import customers'}
-    </button>
-  );
-}
-
-const resultRowStyles: Record<string, string> = {
+const resultTones: Record<string, string> = {
   created: 'text-brand-700 dark:text-brand-300',
   skipped_duplicate: 'text-amber-700 dark:text-amber-300',
   error: 'text-red-700 dark:text-red-300',
@@ -33,77 +25,89 @@ export function ImportCustomersForm() {
     importCustomers,
     {}
   );
+  const [fileName, setFileName] = useState<string | null>(null);
 
   return (
     <div>
-      <form action={formAction} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex-1">
-          <label htmlFor="file" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            CSV file
-          </label>
-          <input
-            id="file"
-            name="file"
-            type="file"
-            accept=".csv,text/csv"
-            required
-            className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:file:bg-slate-700 dark:file:text-slate-300"
-          />
-          <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-            First row must be a header row with <code>name</code> and <code>email</code> columns.
-          </p>
+      <form action={formAction} className="space-y-5">
+        {/* The real file input is stretched invisibly over the drop zone, so
+            clicking, keyboard focus and native drag-and-drop all just work. */}
+        <div className="relative">
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-line-strong bg-surface-subtle px-6 py-10 text-center transition-colors duration-150 [&:has(input:hover)]:border-brand-500 [&:has(input:hover)]:bg-brand-50/50 [&:has(input:focus-visible)]:border-brand-500 [&:has(input:focus-visible)]:ring-[3px] [&:has(input:focus-visible)]:ring-brand-500/20 dark:[&:has(input:hover)]:bg-brand-500/5">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-surface text-ink-3 shadow-xs ring-1 ring-inset ring-line">
+              <Icon name="upload" className="h-5 w-5" strokeWidth={1.5} />
+            </span>
+            <label htmlFor="file" className="mt-4 text-sm font-semibold text-ink">
+              {fileName ?? 'Choose a CSV file'}
+            </label>
+            <p className="mt-1 text-[13px] text-ink-3">
+              {fileName ? 'Click to choose a different file' : 'or drag and drop it here \u2014 up to 2 MB and 2,000 rows'}
+            </p>
+            <input
+              id="file"
+              name="file"
+              type="file"
+              accept=".csv,text/csv"
+              required
+              onChange={(event) => setFileName(event.target.files?.[0]?.name ?? null)}
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            />
+          </div>
         </div>
 
-        <SubmitButton />
+        <p className="field-hint !mt-3">
+          The first row must be a header row with <code className="rounded bg-surface-muted px-1 py-0.5 font-mono text-[12px] text-ink-2">name</code> and{' '}
+          <code className="rounded bg-surface-muted px-1 py-0.5 font-mono text-[12px] text-ink-2">email</code> columns.
+          Existing customers are matched by email and skipped.
+        </p>
+
+        <SubmitButton pendingText="Importing…" icon={<Icon name="upload" className="h-4 w-4" />}>
+          Import customers
+        </SubmitButton>
       </form>
 
-      {state.error && (
-        <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50">
-          {state.error}
-        </p>
-      )}
+      {state.error && <Notice variant="error" className="mt-5">{state.error}</Notice>}
 
       {state.summary && (
-        <div className="mt-6">
-          <div className="flex flex-wrap gap-3">
-            <span className="rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700 ring-1 ring-inset ring-brand-100 dark:bg-brand-950/40 dark:text-brand-300 dark:ring-brand-900/50">
+        <div className="mt-8 animate-fade-in border-t border-line pt-6">
+          <h3 className="text-sm font-semibold text-ink">Import results</h3>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Badge tone="success" dot>
               {state.summary.created} added
-            </span>
+            </Badge>
             {state.summary.duplicates > 0 && (
-              <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/50">
+              <Badge tone="warning" dot>
                 {state.summary.duplicates} duplicate{state.summary.duplicates === 1 ? '' : 's'} skipped
-              </span>
+              </Badge>
             )}
             {state.summary.errors > 0 && (
-              <span className="rounded-full bg-red-50 px-3 py-1 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50">
+              <Badge tone="danger" dot>
                 {state.summary.errors} error{state.summary.errors === 1 ? '' : 's'}
-              </span>
+              </Badge>
             )}
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-              {state.summary.totalRows} rows total
-            </span>
+            <Badge>{state.summary.totalRows} rows total</Badge>
           </div>
 
           {state.summary.results.some((r) => r.status !== 'created') && (
-            <div className="mt-4 max-h-80 overflow-y-auto rounded-xl border border-slate-200/70 dark:border-slate-700/70">
-              <table className="min-w-full divide-y divide-slate-100 text-sm dark:divide-slate-700">
-                <thead className="bg-slate-50/60 dark:bg-slate-800/60">
+            <div className="scroll-thin mt-5 max-h-80 overflow-auto rounded-xl border border-line">
+              <table className="data-table">
+                <thead className="sticky top-0">
                   <tr>
-                    <th className="px-3 py-2 text-left font-medium text-slate-500 dark:text-slate-400">Row</th>
-                    <th className="px-3 py-2 text-left font-medium text-slate-500 dark:text-slate-400">Name</th>
-                    <th className="px-3 py-2 text-left font-medium text-slate-500 dark:text-slate-400">Email</th>
-                    <th className="px-3 py-2 text-left font-medium text-slate-500 dark:text-slate-400">Result</th>
+                    <th>Row</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Result</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                <tbody>
                   {state.summary.results
                     .filter((r) => r.status !== 'created')
                     .map((r) => (
                       <tr key={r.row}>
-                        <td className="px-3 py-2 text-slate-500 dark:text-slate-400">{r.row}</td>
-                        <td className="px-3 py-2 text-slate-700 dark:text-slate-300">{r.name || '\u2014'}</td>
-                        <td className="px-3 py-2 text-slate-700 dark:text-slate-300">{r.email || '\u2014'}</td>
-                        <td className={`px-3 py-2 font-medium ${resultRowStyles[r.status]}`}>
+                        <td className="tabular-nums text-ink-3">{r.row}</td>
+                        <td>{r.name || '\u2014'}</td>
+                        <td>{r.email || '\u2014'}</td>
+                        <td className={`font-medium ${resultTones[r.status]}`}>
                           {resultLabels[r.status]}
                           {r.status === 'error' && 'reason' in r ? `: ${r.reason}` : ''}
                         </td>

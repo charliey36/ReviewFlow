@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { Icon } from '@/components/ui/icons';
+import { Notice } from '@/components/ui/notice';
+import { Spinner } from '@/components/ui/submit-button';
 
 type Mode = 'login' | 'signup';
-
-const inputClasses =
-  'mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20';
 
 export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
@@ -15,6 +15,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -63,9 +64,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="email" className="label">
           Email
         </label>
         <input
@@ -76,46 +77,54 @@ export function AuthForm({ mode }: { mode: Mode }) {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className={inputClasses}
+          className="input mt-1.5 py-2.5"
           placeholder="you@business.com"
         />
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="password" className="label">
           Password
         </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          required
-          minLength={6}
-          autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className={inputClasses}
-          placeholder="At least 6 characters"
-        />
+        <div className="relative mt-1.5">
+          <input
+            id="password"
+            name="password"
+            type={showPassword ? 'text' : 'password'}
+            required
+            minLength={6}
+            autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="input py-2.5 pr-11"
+            placeholder={mode === 'signup' ? 'At least 6 characters' : 'Your password'}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((value) => !value)}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            aria-pressed={showPassword}
+            className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-ink-4 transition-colors hover:bg-surface-muted hover:text-ink-2"
+          >
+            <Icon name={showPassword ? 'eyeOff' : 'eye'} className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
-      {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100">
-          {error}
-        </p>
-      )}
-      {message && (
-        <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700 ring-1 ring-inset ring-brand-100">
-          {message}
-        </p>
-      )}
+      {error && <Notice variant="error">{error}</Notice>}
+      {message && <Notice variant="success">{message}</Notice>}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {loading ? 'Please wait\u2026' : mode === 'signup' ? 'Create account' : 'Log in'}
+      <button type="submit" disabled={loading} aria-busy={loading} className="btn btn-primary btn-lg w-full">
+        {loading ? (
+          <>
+            <Spinner />
+            Please wait…
+          </>
+        ) : mode === 'signup' ? (
+          'Create account'
+        ) : (
+          'Log in'
+        )}
       </button>
     </form>
   );

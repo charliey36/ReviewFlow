@@ -4,27 +4,36 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from '@/components/sidebar-context';
-import { LogoOnDark } from '@/components/logo';
+import { Logo } from '@/components/logo';
 import { SidebarNav } from '@/components/sidebar-nav';
+import { SidebarSearch } from '@/components/search-triggers';
+import { WorkspaceMenu } from '@/components/workspace-menu';
+import { Icon } from '@/components/ui/icons';
 
 /**
- * The single source of truth for sidebar UI, used identically on desktop
- * and mobile — see sidebar-context.tsx for why this replaced the previous
- * two-sidebar setup (a static always-on desktop <aside> plus a separate,
- * defaults-closed mobile drawer that the toggle button didn't actually
- * control). Now there is exactly one sidebar, positioned fixed at all
- * breakpoints, sliding via `translate-x` based on shared SidebarContext
- * state. The parent layout shifts main content's left margin to match on
- * large screens; on small screens the sidebar overlays with a backdrop
- * instead, since there's no room to permanently reserve a column.
+ * The single sidebar for desktop and mobile. It is fixed at every
+ * breakpoint and slides via `translate-x`; on large screens the content
+ * column shifts to make room (see AppContentShell), on small screens it
+ * overlays with a backdrop.
+ *
+ * It is frosted glass: the page's ambient color shows through, blurred.
+ *
+ * Before hydration (`ready` false) it renders closed on mobile and open on
+ * desktop, so phones never see the overlay flash open on first paint.
  */
-export function SidebarDrawer() {
-  const { isOpen, close } = useSidebar();
+export function SidebarDrawer({
+  businessName,
+  businessLogoUrl,
+  feedbackCount,
+}: {
+  businessName: string;
+  businessLogoUrl: string | null;
+  feedbackCount: number;
+}) {
+  const { isOpen, ready, close } = useSidebar();
   const pathname = usePathname();
 
-  // On mobile, close the sidebar whenever the route changes (e.g. after
-  // clicking a nav link), since it's an overlay there. On desktop this is
-  // a no-op in practice because clicking a link doesn't call close().
+  // On mobile the sidebar is an overlay, so close it after navigating.
   useEffect(() => {
     if (window.innerWidth < 1024) {
       close();
@@ -32,7 +41,7 @@ export function SidebarDrawer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
-  // Allow closing with the Escape key (mobile overlay use case).
+  // Escape closes the overlay on mobile.
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -42,53 +51,51 @@ export function SidebarDrawer() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, close]);
 
+  const position = !ready
+    ? '-translate-x-full invisible lg:translate-x-0 lg:visible'
+    : isOpen
+      ? 'translate-x-0 visible'
+      : '-translate-x-full invisible';
+
+  const displayName = businessName.trim() || 'Your business';
+
   return (
     <>
-      {/* Backdrop — only ever visible on small screens (lg:hidden), since
-          on desktop the sidebar pushes content aside instead of
-          overlaying it. */}
+      {/* Backdrop - mobile only; on desktop the sidebar pushes content aside. */}
       <div
         onClick={close}
         aria-hidden="true"
-        className={`fixed inset-0 z-30 bg-black/40 transition-opacity duration-200 lg:hidden ${
-          isOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+        className={`fixed inset-0 z-30 bg-ink/45 backdrop-blur-[3px] transition-opacity duration-200 lg:hidden ${
+          ready && isOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         }`}
       />
 
       <aside
-        role="dialog"
-        aria-modal="true"
-        aria-label="Navigation"
-        className={`fixed inset-y-0 left-0 z-40 flex w-60 flex-shrink-0 flex-col bg-brand-800 shadow-xl transition-transform duration-300 ease-in-out dark:bg-surface-sidebar dark:shadow-black/40 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        aria-label="Sidebar"
+        className={`fixed inset-y-0 left-0 z-40 flex w-[264px] flex-col border-r border-line/80 bg-surface-sidebar/80 backdrop-blur-xl backdrop-saturate-150 ${position} ${
+          ready ? 'transition-[transform,visibility] duration-300 ease-out-expo' : ''
+        } max-lg:shadow-pop`}
       >
-        <div className="flex h-[65px] flex-shrink-0 items-center justify-between border-b border-white/10 px-5">
-          <Link href="/dashboard">
-            <LogoOnDark />
+        <div className="flex h-16 flex-shrink-0 items-center justify-between px-4">
+          <Link href="/dashboard" aria-label="ReviewFlow dashboard" className="rounded-lg">
+            <Logo />
           </Link>
           <button
             type="button"
             onClick={close}
             aria-label="Close navigation menu"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-brand-100/80 transition-colors duration-200 hover:bg-brand-700/60 hover:text-white lg:hidden"
+            className="btn btn-ghost btn-icon -mr-2 h-8 w-8 lg:hidden"
           >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.75}
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
+            <Icon name="x" className="h-[18px] w-[18px]" />
           </button>
         </div>
-        <SidebarNav />
-        <div className="px-3 py-4 text-xs text-brand-200/60 dark:text-slate-500">
-          &copy; {new Date().getFullYear()} ReviewFlow
+
+        <div className="space-y-2.5 px-3 pb-1">
+          <WorkspaceMenu name={displayName} logoUrl={businessLogoUrl} />
+          <SidebarSearch />
         </div>
+
+        <SidebarNav feedbackCount={feedbackCount} />
       </aside>
     </>
   );

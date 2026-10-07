@@ -1,119 +1,115 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormState } from 'react-dom';
+import { useActionToast } from '@/components/toast';
 import type { LoyaltyProgram } from '@/lib/database.types';
+import { Icon } from '@/components/ui/icons';
+import { Notice } from '@/components/ui/notice';
+import { SectionCard } from '@/components/ui/section-card';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { saveLoyaltyProgram, type LoyaltyFormResult } from './actions';
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+function PointsField({
+  id,
+  label,
+  defaultValue,
+  min = 0,
+}: {
+  id: string;
+  label: string;
+  defaultValue: number;
+  min?: number;
+}) {
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {pending ? 'Saving\u2026' : 'Save loyalty program'}
-    </button>
+    <div>
+      <label htmlFor={id} className="label">
+        {label}
+      </label>
+      <div className="relative mt-1.5">
+        <input
+          id={id}
+          name={id}
+          type="number"
+          min={min}
+          defaultValue={defaultValue}
+          className="input pr-11 tabular-nums"
+        />
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">pts</span>
+      </div>
+    </div>
   );
 }
 
-const inputClasses =
-  'mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500';
-
 export function LoyaltyProgramForm({ program }: { program: LoyaltyProgram | null }) {
   const [state, formAction] = useFormState<LoyaltyFormResult, FormData>(saveLoyaltyProgram, {});
+  useActionToast(state, { title: 'Loyalty program saved' });
 
   return (
-    <form action={formAction} className="max-w-lg space-y-6">
-      <label className="flex items-center gap-2">
-        <input type="checkbox" name="is_active" defaultChecked={program?.is_active ?? false} className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-800" />
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Loyalty program is active</span>
-      </label>
+    <form action={formAction} className="space-y-6">
+      <SectionCard>
+        <label className="flex cursor-pointer items-center justify-between gap-6">
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold text-ink">Loyalty program is active</span>
+            <span className="mt-1 block text-[13px] leading-5 text-ink-3">
+              When on, customers earn points automatically and can redeem them for your reward.
+            </span>
+          </span>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div>
-          <label htmlFor="points_per_visit" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Points per visit
-          </label>
-          <input
-            id="points_per_visit"
-            name="points_per_visit"
-            type="number"
-            min={0}
-            defaultValue={program?.points_per_visit ?? 10}
-            className={inputClasses}
-          />
-        </div>
-        <div>
-          <label htmlFor="points_per_referral" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Points per referral
-          </label>
-          <input
-            id="points_per_referral"
-            name="points_per_referral"
-            type="number"
-            min={0}
-            defaultValue={program?.points_per_referral ?? 50}
-            className={inputClasses}
-          />
-        </div>
-        <div>
-          <label htmlFor="points_per_review" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Points per review
-          </label>
-          <input
-            id="points_per_review"
-            name="points_per_review"
-            type="number"
-            min={0}
-            defaultValue={program?.points_per_review ?? 20}
-            className={inputClasses}
-          />
-        </div>
-      </div>
-
-      <div className="h-px bg-slate-100 dark:bg-slate-700" />
-
-      <div>
-        <label htmlFor="redemption_points" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Points needed to redeem
+          <span className="relative inline-flex flex-shrink-0 items-center">
+            <input
+              type="checkbox"
+              role="switch"
+              name="is_active"
+              defaultChecked={program?.is_active ?? false}
+              className="peer sr-only"
+            />
+            <span className="h-6 w-11 rounded-full bg-line-strong transition-colors duration-200 peer-checked:bg-brand-600 peer-focus-visible:ring-[3px] peer-focus-visible:ring-brand-500/30" />
+            <span className="pointer-events-none absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ease-out-expo peer-checked:translate-x-5" />
+          </span>
         </label>
-        <input
-          id="redemption_points"
-          name="redemption_points"
-          type="number"
-          min={1}
-          defaultValue={program?.redemption_points ?? 100}
-          className={`${inputClasses} w-40`}
-        />
+      </SectionCard>
+
+      <SectionCard title="Earning rules" description="How many points customers earn for each action.">
+        <div className="grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-3">
+          <PointsField id="points_per_visit" label="Per visit" defaultValue={program?.points_per_visit ?? 10} />
+          <PointsField id="points_per_review" label="Per review" defaultValue={program?.points_per_review ?? 20} />
+          <PointsField id="points_per_referral" label="Per referral" defaultValue={program?.points_per_referral ?? 50} />
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Reward" description="What customers get when they reach the redemption threshold.">
+        <div className="max-w-lg space-y-5">
+          <div className="w-full sm:w-52">
+            <PointsField
+              id="redemption_points"
+              label="Points needed to redeem"
+              defaultValue={program?.redemption_points ?? 100}
+              min={1}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="redemption_reward_description" className="label">
+              Reward description
+            </label>
+            <input
+              id="redemption_reward_description"
+              name="redemption_reward_description"
+              type="text"
+              required
+              defaultValue={program?.redemption_reward_description ?? '$10 off your next visit'}
+              className="input mt-1.5"
+            />
+          </div>
+        </div>
+      </SectionCard>
+
+      <div className="flex flex-wrap items-center gap-4">
+        <SubmitButton pendingText="Saving…" icon={<Icon name="check" className="h-4 w-4" strokeWidth={2.2} />}>
+          Save loyalty program
+        </SubmitButton>
+        {state.error && <Notice variant="error">{state.error}</Notice>}
       </div>
-
-      <div>
-        <label htmlFor="redemption_reward_description" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Reward description
-        </label>
-        <input
-          id="redemption_reward_description"
-          name="redemption_reward_description"
-          type="text"
-          required
-          defaultValue={program?.redemption_reward_description ?? '$10 off your next visit'}
-          className={inputClasses}
-        />
-      </div>
-
-      {state.error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50">
-          {state.error}
-        </p>
-      )}
-      {state.success && (
-        <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700 ring-1 ring-inset ring-brand-100 dark:bg-brand-950/40 dark:text-brand-300 dark:ring-brand-900/50">
-          Saved.
-        </p>
-      )}
-
-      <SubmitButton />
     </form>
   );
 }

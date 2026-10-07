@@ -1,41 +1,39 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useRef } from 'react';
+import { useActionToast } from '@/components/toast';
+import { useFormState } from 'react-dom';
+import { Notice } from '@/components/ui/notice';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { createSegment, type SegmentFormResult } from './actions';
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {pending ? 'Creating\u2026' : 'Create segment'}
-    </button>
-  );
-}
-
-const inputClasses =
-  'mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500';
 
 export function CreateSegmentForm() {
   const [state, formAction] = useFormState<SegmentFormResult, FormData>(createSegment, {});
+  useActionToast(state, { title: 'Segment created', description: 'Matching customers are included automatically.' });
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (state.success) formRef.current?.reset();
+  }, [state.success]);
 
   return (
-    <form action={formAction} className="grid grid-cols-1 gap-3 sm:grid-cols-5 sm:items-end">
-      <div className="sm:col-span-2">
-        <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+    <form
+      ref={formRef}
+      action={formAction}
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[2fr_1.6fr_0.8fr_1fr_auto] lg:items-end"
+    >
+      <div className="sm:col-span-2 lg:col-span-1">
+        <label htmlFor="name" className="label">
           Segment name
         </label>
-        <input id="name" name="name" type="text" required className={inputClasses} placeholder="Lapsed high-value" />
+        <input id="name" name="name" type="text" required className="input mt-1.5" placeholder="Lapsed high-value" />
       </div>
 
       <div>
-        <label htmlFor="field" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label htmlFor="field" className="label">
           Field
         </label>
-        <select id="field" name="field" className={inputClasses} defaultValue="days_since_last_visit">
+        <select id="field" name="field" className="input mt-1.5" defaultValue="days_since_last_visit">
           <option value="days_since_last_visit">Days since last visit</option>
           <option value="lifetime_value">Lifetime value</option>
           <option value="visit_count">Visit count</option>
@@ -44,10 +42,10 @@ export function CreateSegmentForm() {
       </div>
 
       <div>
-        <label htmlFor="operator" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label htmlFor="operator" className="label">
           Operator
         </label>
-        <select id="operator" name="operator" className={inputClasses} defaultValue="gte">
+        <select id="operator" name="operator" className="input mt-1.5" defaultValue="gte">
           <option value="gt">&gt;</option>
           <option value="gte">&ge;</option>
           <option value="lt">&lt;</option>
@@ -57,21 +55,17 @@ export function CreateSegmentForm() {
       </div>
 
       <div>
-        <label htmlFor="value" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label htmlFor="value" className="label">
           Value
         </label>
-        <input id="value" name="value" type="text" required className={inputClasses} placeholder="60" />
+        <input id="value" name="value" type="text" required className="input mt-1.5" placeholder="60" />
       </div>
 
-      <div className="sm:col-span-5">
-        <SubmitButton />
-      </div>
+      <SubmitButton pendingText="Creating…" className="sm:col-span-2 lg:col-span-1">
+        Create segment
+      </SubmitButton>
 
-      {state.error && (
-        <p className="sm:col-span-5 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50">
-          {state.error}
-        </p>
-      )}
+      {state.error && <Notice variant="error" className="sm:col-span-2 lg:col-span-5">{state.error}</Notice>}
     </form>
   );
 }

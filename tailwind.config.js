@@ -1,4 +1,11 @@
 /** @type {import('tailwindcss').Config} */
+
+/* Colors backed by CSS variables (see globals.css) so light/dark flip in one
+   place instead of needing a `dark:` variant on every element. Channels are
+   stored as "R G B" so Tailwind opacity modifiers (e.g. `border-line/60`)
+   keep working. */
+const token = (variable) => `rgb(var(${variable}) / <alpha-value>)`;
+
 module.exports = {
   darkMode: 'class',
   content: [
@@ -7,34 +14,95 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        // Inter is self-hosted via next/font/local in app/layout.tsx. The
+        // fallbacks are the platform UI fonts, so text never falls back to a
+        // serif/odd default if the font file is slow to load.
+        sans: [
+          'var(--font-inter)',
+          'ui-sans-serif',
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          'Roboto',
+          '"Helvetica Neue"',
+          'Arial',
+          'sans-serif',
+        ],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', '"Liberation Mono"', 'monospace'],
+      },
+      fontSize: {
+        '2xs': ['0.6875rem', { lineHeight: '1rem' }],
+      },
       colors: {
+        /* ReviewFlow green, tuned vivid: the same hue family as the original
+           brand, with enough saturation to read as an accent that pops. */
         brand: {
-          50: '#e6f4ea',
-          100: '#ceead5',
-          200: '#a8d5b5',
-          300: '#7cbf94',
-          400: '#4ca86e',
-          500: '#1e8e3e',
-          600: '#188038',
-          700: '#137333',
-          800: '#0f5c29',
-          900: '#0b451f',
+          50: '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#10b981',
+          600: '#059669',
+          700: '#047857',
+          800: '#065f46',
+          900: '#064e3b',
+          950: '#022c22',
         },
-        /* Dark mode surface palette (recommended SaaS slate-navy scale).
-           Named semantically so page markup reads as intent ("dark:bg-
-           surface-card") rather than raw hex/slate-shade guesswork, and so
-           the palette can be retuned in one place later if needed. */
+        /* Semantic neutrals. `app` is the page canvas, `surface` is anything
+           that sits on it (cards, inputs, popovers), `ink` is text, `line` is
+           hairline borders. */
+        app: token('--bg'),
         surface: {
-          bg: '#0f172a',
-          DEFAULT: '#1e293b',
-          sidebar: '#111827',
-          card: '#1f2937',
+          DEFAULT: token('--surface'),
+          subtle: token('--surface-2'),
+          muted: token('--surface-3'),
+          sidebar: token('--sidebar'),
+          // Legacy aliases kept so any untouched markup keeps working.
+          bg: token('--bg'),
+          card: token('--surface'),
+        },
+        ink: {
+          DEFAULT: token('--ink'),
+          2: token('--ink-2'),
+          3: token('--ink-3'),
+          4: token('--ink-4'),
+        },
+        line: {
+          DEFAULT: token('--line'),
+          strong: token('--line-strong'),
         },
       },
+      /* Elevation scale. Values live in CSS variables because dark mode
+         expresses depth with surface lift + a faint top highlight instead of
+         drop shadows (Linear-style "luminance stacking"). */
       boxShadow: {
-        card: '0 1px 2px 0 rgba(60, 64, 67, 0.06), 0 1px 3px 1px rgba(60, 64, 67, 0.08)',
-        'card-hover': '0 1px 3px 0 rgba(60, 64, 67, 0.1), 0 6px 12px 2px rgba(60, 64, 67, 0.1)',
-        'card-lg': '0 2px 4px 0 rgba(60, 64, 67, 0.06), 0 8px 24px 2px rgba(60, 64, 67, 0.1)',
+        xs: 'var(--shadow-xs)',
+        sm: 'var(--shadow-sm)',
+        DEFAULT: 'var(--shadow-sm)',
+        md: 'var(--shadow-card)',
+        card: 'var(--shadow-card)',
+        'card-hover': 'var(--shadow-card-hover)',
+        'card-lg': 'var(--shadow-pop)',
+        pop: 'var(--shadow-pop)',
+        float: 'var(--shadow-float)',
+        'btn-primary': 'var(--shadow-btn-primary)',
+        hero: 'var(--shadow-hero)',
+      },
+      transitionTimingFunction: {
+        'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
+      },
+      animation: {
+        'fade-in': 'rf-fade-in 200ms ease-out both',
+        'fade-in-up': 'rf-fade-in-up 420ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        'pop-in': 'rf-pop-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        'grow-x': 'rf-grow-x 900ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        'palette-in': 'rf-palette-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        'toast-in': 'rf-toast-in 360ms cubic-bezier(0.16, 1, 0.3, 1) both',
+        'float-slow': 'rf-float 16s ease-in-out infinite',
+        'float-slower': 'rf-float 22s ease-in-out infinite reverse',
       },
     },
   },

@@ -1,6 +1,14 @@
+import type { Metadata } from 'next';
 import { requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
+import { PageHeader } from '@/components/ui/page-header';
 import { FeedbackList } from './feedback-list';
+
+export const metadata: Metadata = { title: 'Feedback inbox' };
+
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
 
 export default async function FeedbackInboxPage() {
   const business = await requireBusiness();
@@ -21,20 +29,21 @@ export default async function FeedbackInboxPage() {
 
   const items = (feedback ?? []).map((item) => ({
     ...item,
+    // Formatted on the server so the client component renders identical text.
+    createdLabel: formatDateTime(item.created_at),
     customer: item.customer_id ? customerById.get(item.customer_id) ?? null : null,
   }));
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Feedback inbox</h1>
-      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-        Private feedback customers chose to share directly with you instead of (or alongside) a
-        public review.
-      </p>
+      <PageHeader
+        title="Feedback inbox"
+        icon="chat"
+        tone="rose"
+        description="Private feedback customers chose to share directly with you instead of (or alongside) a public review."
+      />
 
-      <div className="mt-6">
-        <FeedbackList items={items} />
-      </div>
+      <FeedbackList items={items} />
     </div>
   );
 }

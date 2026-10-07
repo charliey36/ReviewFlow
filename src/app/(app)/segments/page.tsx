@@ -1,8 +1,16 @@
+import type { Metadata } from 'next';
 import { requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
 import { evaluateSegment, type SegmentCondition } from '@/lib/segments';
+import { PageHeader } from '@/components/ui/page-header';
+import { SectionCard } from '@/components/ui/section-card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Icon } from '@/components/ui/icons';
+import { toneStyle } from '@/components/ui/tones';
 import { CreateSegmentForm } from './create-segment-form';
 import { DeleteSegmentButton } from './delete-segment-button';
+
+export const metadata: Metadata = { title: 'Segments' };
 
 const fieldLabels: Record<string, string> = {
   days_since_last_visit: 'Days since last visit',
@@ -29,6 +37,12 @@ export default async function SegmentsPage() {
     .eq('business_id', business.id)
     .order('created_at', { ascending: false });
 
+  const { count: totalCustomers } = await supabase
+    .from('customers')
+    .select('id', { count: 'exact', head: true })
+    .eq('business_id', business.id);
+  const customerTotal = totalCustomers ?? 0;
+
   const segmentsWithCounts = await Promise.all(
     (segments ?? []).map(async (segment) => {
       const members = await evaluateSegment(
@@ -42,49 +56,74 @@ export default async function SegmentsPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Segments</h1>
-      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-        Dynamic customer segments, evaluated live from visit history, spend, and tags — not a
-        static list that goes stale.
-      </p>
+      <PageHeader
+        title="Segments"
+        icon="funnel"
+        tone="violet"
+        description="Dynamic customer segments, evaluated live from visit history, spend and tags — not a static list that goes stale."
+      />
 
-      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Create a segment</h2>
-        <div className="mt-4">
-          <CreateSegmentForm />
-        </div>
-      </div>
+      <SectionCard
+        title="Create a segment"
+        description="Define a rule. Every customer who matches it is included automatically, and drops out when they stop matching."
+      >
+        <CreateSegmentForm />
+      </SectionCard>
 
-      <div className="mt-6 space-y-3">
+      <div className="mt-6">
         {segmentsWithCounts.length > 0 ? (
-          segmentsWithCounts.map((segment) => {
-            const condition = (segment.rule_definition as SegmentCondition[])[0];
-            return (
-              <div
-                key={segment.id}
-                className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-white p-5 shadow-md dark:border-slate-700/70 dark:bg-surface-card"
-              >
-                <div>
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">{segment.name}</p>
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {segmentsWithCounts.map((segment) => {
+              const condition = (segment.rule_definition as SegmentCondition[])[0];
+              return (
+                <li
+                  key={segment.id}
+                  style={toneStyle('violet')}
+                  className="card spotlight tone-wash flex flex-col p-5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="min-w-0 truncate text-sm font-semibold text-ink">{segment.name}</p>
+                    <DeleteSegmentButton segmentId={segment.id} segmentName={segment.name} />
+                  </div>
+
                   {condition && (
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {fieldLabels[condition.field]} {operatorLabels[condition.operator]} {condition.value}
+                    <p className="mt-2.5 inline-flex w-fit max-w-full items-center gap-1.5 rounded-md bg-surface-muted px-2 py-1 text-xs font-medium text-ink-2 ring-1 ring-inset ring-line-strong/60">
+                      <Icon name="funnel" className="h-3 w-3 flex-shrink-0 text-ink-4" />
+                      <span className="truncate">
+                        {fieldLabels[condition.field]} {operatorLabels[condition.operator]} {condition.value}
+                      </span>
                     </p>
                   )}
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                    {segment.memberCount} customer{segment.memberCount === 1 ? '' : 's'}
-                  </span>
-                  <DeleteSegmentButton segmentId={segment.id} />
-                </div>
-              </div>
-            );
-          })
+
+                  <p className="mt-6 flex items-baseline gap-1.5">
+                    <span className="text-4xl font-semibold tracking-[-0.035em] text-ink tabular-nums">
+                      {segment.memberCount.toLocaleString('en-US')}
+                    </span>
+                    <span className="text-[13px] text-ink-3">
+                      {segment.memberCount === 1 ? 'customer' : 'customers'}
+                      {customerTotal > 0 && ` \u00b7 ${Math.round((segment.memberCount / customerTotal) * 100)}% of all`}
+                    </span>
+                  </p>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-muted">
+                    <div
+                      className="bar-grow h-full rounded-full"
+                      style={{
+                        width: `${customerTotal > 0 ? Math.min(100, (segment.memberCount / customerTotal) * 100) : 0}%`,
+                        backgroundImage: 'linear-gradient(90deg, rgb(var(--tone)), rgb(var(--tone-deep)))',
+                      }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         ) : (
-          <div className="rounded-2xl border border-slate-200/70 bg-white p-10 text-center shadow-md dark:border-slate-700/70 dark:bg-surface-card">
-            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">No segments yet</p>
-            <p className="mt-1 text-sm text-slate-400 dark:text-slate-500">Create one above to get started.</p>
+          <div className="card">
+            <EmptyState
+              icon="funnel"
+              title="No segments yet"
+              description="Create your first segment above, for example customers who haven't visited in 60+ days."
+            />
           </div>
         )}
       </div>

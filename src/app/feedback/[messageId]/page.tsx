@@ -1,12 +1,16 @@
+import type { Metadata } from 'next';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { PublicShell } from '@/components/public-shell';
+import { Notice } from '@/components/ui/notice';
 import { PrivateFeedbackForm } from './private-feedback-form';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Share feedback' };
 
 /**
  * Public landing page for the private feedback link included in every
  * review request message, alongside (never instead of) the public review
- * link — see src/lib/compliance.ts for why this page exists unconditionally
+ * link - see src/lib/compliance.ts for why this page exists unconditionally
  * rather than being gated behind a sentiment check.
  */
 export default async function FeedbackPage({ params }: { params: { messageId: string } }) {
@@ -18,36 +22,33 @@ export default async function FeedbackPage({ params }: { params: { messageId: st
     .eq('id', params.messageId)
     .maybeSingle();
 
-  let businessName = 'this business';
+  let businessName: string | undefined;
+  let logoUrl: string | null = null;
   if (message) {
     const { data: business } = await supabase
       .from('businesses')
-      .select('name')
+      .select('name, brand_logo_url')
       .eq('id', message.business_id)
       .maybeSingle();
-    if (business) businessName = business.name;
+    if (business) {
+      businessName = business.name || undefined;
+      logoUrl = business.brand_logo_url;
+    }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card sm:p-8">
-        <h1 className="text-xl font-semibold tracking-tight text-slate-900">
-          Share feedback with {businessName}
-        </h1>
-        <p className="mt-1.5 text-sm text-slate-500">
-          This goes directly and privately to the business — it&apos;s not posted publicly.
-        </p>
-
-        <div className="mt-6">
-          {message ? (
-            <PrivateFeedbackForm messageId={params.messageId} />
-          ) : (
-            <p className="rounded-xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-600">
-              This feedback link is no longer valid.
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
+    <PublicShell
+      businessName={businessName}
+      logoUrl={logoUrl}
+      title={`Share feedback${businessName ? ` with ${businessName}` : ''}`}
+      subtitle="This goes directly and privately to the business — it's not posted publicly."
+      note="Private: only the business sees this"
+    >
+      {message ? (
+        <PrivateFeedbackForm messageId={params.messageId} />
+      ) : (
+        <Notice variant="warning">This feedback link is no longer valid.</Notice>
+      )}
+    </PublicShell>
   );
 }

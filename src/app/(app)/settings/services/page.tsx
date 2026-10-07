@@ -1,7 +1,15 @@
+import type { Metadata } from 'next';
 import { requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
+import { PageHeader } from '@/components/ui/page-header';
+import { SectionCard } from '@/components/ui/section-card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Badge } from '@/components/ui/badge';
+import { SettingsTabs } from '@/components/settings-tabs';
 import { AddServiceForm } from './add-service-form';
 import { DeactivateServiceButton } from './deactivate-service-button';
+
+export const metadata: Metadata = { title: 'Services' };
 
 export default async function ServicesPage() {
   const business = await requireBusiness();
@@ -16,61 +24,61 @@ export default async function ServicesPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Services</h1>
-      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-        Define your services and how often customers typically need to rebook. This drives
-        automated rebooking reminders on the customer detail page.
-      </p>
+      <PageHeader
+        title="Services"
+        icon="tag"
+        tone="sky"
+        description="Define your services and how often customers typically need to rebook. This drives automated rebooking reminders on the customer detail page."
+        tabs={<SettingsTabs />}
+      />
 
-      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Add a service</h2>
-        <div className="mt-4">
-          <AddServiceForm />
-        </div>
-      </div>
+      <SectionCard title="Add a service" description="Customers get a rebooking reminder once this interval has passed since their last visit.">
+        <AddServiceForm />
+      </SectionCard>
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-md dark:border-slate-700/70 dark:bg-surface-card">
-        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-700">
-          <thead className="bg-slate-50/60 dark:bg-slate-800/60">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Name
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Rebook after
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Default price
-              </th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-            {services && services.length > 0 ? (
-              services.map((service) => (
-                <tr key={service.id}>
-                  <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">{service.name}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                    {service.recurrence_interval_days ? `${service.recurrence_interval_days} days` : '\u2014'}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                    {service.default_price != null ? `$${service.default_price.toFixed(2)}` : '\u2014'}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <DeactivateServiceButton serviceId={service.id} />
-                  </td>
+      <SectionCard className="mt-6" title="Your services" flush>
+        {services && services.length > 0 ? (
+          <div className="scroll-thin overflow-x-auto">
+            <table className="data-table data-table-hover">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Rebook after</th>
+                  <th className="text-right">Default price</th>
+                  <th className="w-24" aria-hidden="true" />
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-400 dark:text-slate-500">
-                  No services yet. Add one above.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {services.map((service) => (
+                  <tr key={service.id}>
+                    <td className="font-medium text-ink">{service.name}</td>
+                    <td>
+                      {service.recurrence_interval_days ? (
+                        <Badge>{service.recurrence_interval_days} days</Badge>
+                      ) : (
+                        <span className="text-ink-4">{'\u2014'}</span>
+                      )}
+                    </td>
+                    <td className="text-right tabular-nums">
+                      {service.default_price != null ? `$${service.default_price.toFixed(2)}` : '\u2014'}
+                    </td>
+                    <td className="text-right">
+                      <DeactivateServiceButton serviceId={service.id} serviceName={service.name} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <EmptyState
+            icon="tag"
+            title="No services yet"
+            description="Add your first service above, like a haircut every 30 days."
+            className="py-10"
+          />
+        )}
+      </SectionCard>
     </div>
   );
 }

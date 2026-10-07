@@ -1,12 +1,15 @@
+import type { Metadata } from 'next';
 import { requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
+import { PageHeader } from '@/components/ui/page-header';
+import { SectionCard } from '@/components/ui/section-card';
+import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { CopyButton } from '@/components/ui/copy-button';
 import { CreateReferralForm } from './create-referral-form';
 import { RedeemReferralForm } from './redeem-referral-form';
 
-const statusStyles: Record<string, string> = {
-  pending: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/50',
-  completed: 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100 dark:bg-brand-950/40 dark:text-brand-300 dark:ring-brand-900/50',
-};
+export const metadata: Metadata = { title: 'Referrals' };
 
 export default async function ReferralsPage() {
   const business = await requireBusiness();
@@ -25,65 +28,71 @@ export default async function ReferralsPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Referrals</h1>
-      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-        Generate a referral code for an existing customer, then redeem it when a new customer
-        they referred comes in. Both get rewarded with loyalty points (if your loyalty program is
-        active) once the referral is marked complete.
-      </p>
+      <PageHeader
+        title="Referrals"
+        icon="userPlus"
+        tone="amber"
+        description="Generate a referral code for an existing customer, then redeem it when a new customer they referred comes in. Both get rewarded with loyalty points (if your loyalty program is active) once the referral is marked complete."
+      />
 
-      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Generate a referral code</h2>
-        <div className="mt-4">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <SectionCard title="Generate a referral code" description="Give an existing customer a code to share.">
           <CreateReferralForm customers={customers ?? []} />
-        </div>
-      </div>
+        </SectionCard>
 
-      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Redeem a code</h2>
-        <div className="mt-4">
+        <SectionCard title="Redeem a code" description="Match a code to the new customer it brought in.">
           <RedeemReferralForm customers={customers ?? []} />
-        </div>
+        </SectionCard>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-md dark:border-slate-700/70 dark:bg-surface-card">
-        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-700">
-          <thead className="bg-slate-50/60 dark:bg-slate-800/60">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Code</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Referrer</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Referee</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-            {referrals && referrals.length > 0 ? (
-              referrals.map((referral) => (
-                <tr key={referral.id}>
-                  <td className="px-4 py-3 text-sm font-mono text-slate-900 dark:text-white">{referral.code}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                    {customerNameById.get(referral.referrer_customer_id) ?? '\u2014'}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                    {referral.referee_customer_id ? customerNameById.get(referral.referee_customer_id) ?? '\u2014' : '\u2014'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${statusStyles[referral.status]}`}>
-                      {referral.status}
-                    </span>
-                  </td>
+      <SectionCard className="mt-6" title="All referrals" flush>
+        {referrals && referrals.length > 0 ? (
+          <div className="scroll-thin overflow-x-auto">
+            <table className="data-table data-table-hover">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Referrer</th>
+                  <th>Referee</th>
+                  <th>Status</th>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-400 dark:text-slate-500">
-                  No referrals yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {referrals.map((referral) => (
+                  <tr key={referral.id}>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <code className="rounded-md bg-surface-muted px-2 py-1 font-mono text-[13px] font-medium tracking-wide text-ink ring-1 ring-inset ring-line-strong/60">
+                          {referral.code}
+                        </code>
+                        <CopyButton value={referral.code} />
+                      </div>
+                    </td>
+                    <td className="text-ink">{customerNameById.get(referral.referrer_customer_id) ?? '\u2014'}</td>
+                    <td>
+                      {referral.referee_customer_id
+                        ? customerNameById.get(referral.referee_customer_id) ?? '\u2014'
+                        : '\u2014'}
+                    </td>
+                    <td>
+                      <Badge tone={referral.status === 'completed' ? 'success' : 'warning'} dot className="capitalize">
+                        {referral.status}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <EmptyState
+            icon="userPlus"
+            title="No referrals yet"
+            description="Generate a code for a happy customer and track who they bring in."
+            className="py-10"
+          />
+        )}
+      </SectionCard>
     </div>
   );
 }

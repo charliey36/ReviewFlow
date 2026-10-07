@@ -1,6 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { Icon } from '@/components/ui/icons';
+import { Spinner } from '@/components/ui/submit-button';
 import { addCustomerTag, removeCustomerTag } from './actions';
 import type { CustomerTag } from '@/lib/database.types';
 
@@ -14,19 +16,20 @@ export function TagEditor({ customerId, tags }: { customerId: string; tags: Cust
         {tags.map((tag) => (
           <span
             key={tag.id}
-            className="group flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+            className="inline-flex animate-pop-in items-center gap-1 rounded-full bg-surface-muted py-0.5 pl-2.5 pr-1 text-xs font-medium text-ink-2 ring-1 ring-inset ring-line-strong/70"
           >
             {tag.tag}
             <button
+              type="button"
               onClick={() => removeCustomerTag(tag.id, customerId)}
-              className="text-slate-400 transition-all duration-200 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400"
+              className="flex h-4 w-4 items-center justify-center rounded-full text-ink-4 transition-colors duration-150 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-500/20 dark:hover:text-red-400"
               aria-label={`Remove tag ${tag.tag}`}
             >
-              &times;
+              <Icon name="x" className="h-3 w-3" strokeWidth={2.2} />
             </button>
           </span>
         ))}
-        {tags.length === 0 && <span className="text-xs text-slate-400 dark:text-slate-500">No tags yet</span>}
+        {tags.length === 0 && <span className="text-[13px] text-ink-4">No tags yet</span>}
       </div>
 
       <form
@@ -39,20 +42,17 @@ export function TagEditor({ customerId, tags }: { customerId: string; tags: Cust
           if (inputRef.current) inputRef.current.value = '';
           setPending(false);
         }}
-        className="mt-3 flex gap-2"
+        className="mt-4 flex gap-2"
       >
         <input
           ref={inputRef}
           type="text"
+          aria-label="New tag"
           placeholder="Add a tag (e.g. vip)"
-          className="w-full max-w-xs rounded-lg border border-slate-200 px-3 py-1.5 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
+          className="input min-w-0 flex-1 py-1.5"
         />
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:bg-slate-700"
-        >
-          Add
+        <button type="submit" disabled={pending} className="btn btn-secondary btn-sm">
+          {pending ? <Spinner className="h-3.5 w-3.5" /> : 'Add'}
         </button>
       </form>
     </div>

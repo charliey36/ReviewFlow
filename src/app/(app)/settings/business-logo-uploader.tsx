@@ -1,26 +1,23 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useActionToast } from '@/components/toast';
 import { useFormState, useFormStatus } from 'react-dom';
+import { Avatar } from '@/components/ui/avatar';
+import { Icon } from '@/components/ui/icons';
+import { Spinner } from '@/components/ui/submit-button';
 import { uploadBusinessLogo, type UploadLogoResult } from './actions';
 
 function PendingOverlay() {
-  // Mirrors the pending state into the avatar button via useFormStatus,
-  // which only works for a descendant of the <form>.
+  // Mirrors the pending state into the avatar via useFormStatus, which only
+  // works for a descendant of the <form>.
   const { pending } = useFormStatus();
   return pending ? (
     <div
       aria-hidden="true"
-      className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40"
+      className="absolute inset-0 flex items-center justify-center rounded-full bg-black/45 text-white"
     >
-      <svg className="h-6 w-6 animate-spin text-white" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Zm2 5.291A7.962 7.962 0 0 1 4 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647Z"
-        />
-      </svg>
+      <Spinner className="h-6 w-6" />
     </div>
   ) : null;
 }
@@ -33,11 +30,11 @@ export function BusinessLogoUploader({
   logoUrl: string | null;
 }) {
   const [state, formAction] = useFormState<UploadLogoResult, FormData>(uploadBusinessLogo, {});
+  useActionToast(state, { title: 'Profile picture updated' });
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const initials = (businessName.trim()?.[0] || '?').toUpperCase();
   const displaySrc = preview ?? state.logoUrl ?? logoUrl;
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,23 +46,18 @@ export function BusinessLogoUploader({
   };
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex flex-wrap items-center gap-5">
       <form ref={formRef} action={formAction} className="relative">
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           aria-label="Change business profile picture"
-          className="group relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-brand-50 text-xl font-semibold text-brand-700 ring-1 ring-inset ring-brand-100 transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-brand-500/40 dark:bg-brand-900/40 dark:text-brand-300 dark:ring-brand-900/50"
+          className="group relative block rounded-full focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500/40"
         >
-          {displaySrc ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={displaySrc} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <span aria-hidden="true">{initials}</span>
-          )}
+          <Avatar name={businessName || '?'} src={displaySrc} size="xl" className="!h-16 !w-16 !text-xl" />
 
           {/* Hover overlay with a camera icon, hinting the avatar is clickable */}
-          <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-opacity group-hover:bg-black/40 group-hover:opacity-100">
+          <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 opacity-0 transition duration-150 group-hover:bg-black/45 group-hover:opacity-100">
             <svg
               className="h-5 w-5 text-white"
               fill="none"
@@ -98,13 +90,17 @@ export function BusinessLogoUploader({
         />
       </form>
 
-      <div className="text-sm">
-        <p className="font-medium text-slate-700 dark:text-slate-300">Profile picture</p>
-        <p className="mt-0.5 text-slate-500 dark:text-slate-400">
-          Click the circle to upload a PNG, JPEG, or WEBP, up to 2 MB.
-        </p>
-        {state.error && <p className="mt-1 text-red-700 dark:text-red-400">{state.error}</p>}
-        {state.success && !state.error && <p className="mt-1 text-brand-700 dark:text-brand-400">Profile picture updated.</p>}
+      <div className="min-w-0 text-sm">
+        <button type="button" onClick={() => fileInputRef.current?.click()} className="btn btn-secondary btn-sm">
+          <Icon name="upload" className="h-3.5 w-3.5" />
+          Upload new picture
+        </button>
+        <p className="mt-2 text-[13px] text-ink-3">PNG, JPEG or WEBP, up to 2 MB.</p>
+        {state.error && (
+          <p role="alert" className="mt-1.5 text-[13px] font-medium text-red-600 dark:text-red-400">
+            {state.error}
+          </p>
+        )}
       </div>
     </div>
   );

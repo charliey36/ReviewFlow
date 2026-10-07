@@ -1,21 +1,33 @@
+import type { Metadata } from 'next';
 import { requireBusiness } from '@/lib/business';
+import { PageHeader } from '@/components/ui/page-header';
+import { SectionCard } from '@/components/ui/section-card';
+import { SettingsTabs } from '@/components/settings-tabs';
 import { SettingsForm } from './settings-form';
 import { BusinessLogoUploader } from './business-logo-uploader';
+
+export const metadata: Metadata = { title: 'Settings' };
 
 export default async function SettingsPage() {
   const business = await requireBusiness();
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Settings</h1>
-      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-        Configure your business details and when review requests are sent.
-      </p>
+      <PageHeader
+        title="Settings"
+        icon="cog"
+        tone="slate"
+        description="Configure your business details and when review requests are sent."
+        tabs={<SettingsTabs />}
+      />
 
-      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card sm:p-8">
-        <BusinessLogoUploader businessName={business.name} logoUrl={business.brand_logo_url} />
-
-        <div className="my-6 h-px bg-slate-100 dark:bg-slate-700" />
+      <div className="space-y-6">
+        <SectionCard
+          title="Profile picture"
+          description="Shown in the app and on the feedback and booking pages your customers see."
+        >
+          <BusinessLogoUploader businessName={business.name} logoUrl={business.brand_logo_url} />
+        </SectionCard>
 
         <SettingsForm business={business} />
       </div>

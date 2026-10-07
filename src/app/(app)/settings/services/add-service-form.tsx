@@ -1,27 +1,16 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionToast } from '@/components/toast';
+import { useFormState } from 'react-dom';
+import { Icon } from '@/components/ui/icons';
+import { Notice } from '@/components/ui/notice';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { createService, type ServiceFormResult } from './actions';
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {pending ? 'Adding\u2026' : 'Add service'}
-    </button>
-  );
-}
-
-const inputClasses =
-  'mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500';
 
 export function AddServiceForm() {
   const [state, formAction] = useFormState<ServiceFormResult, FormData>(createService, {});
+  useActionToast(state, { title: 'Service added' });
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -29,50 +18,62 @@ export function AddServiceForm() {
   }, [state.success]);
 
   return (
-    <form ref={formRef} action={formAction} className="grid grid-cols-1 gap-3 sm:grid-cols-4 sm:items-end">
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+    <form
+      ref={formRef}
+      action={formAction}
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_auto] lg:items-end"
+    >
+      <div className="sm:col-span-2 lg:col-span-1">
+        <label htmlFor="name" className="label">
           Service name
         </label>
-        <input id="name" name="name" type="text" required className={inputClasses} placeholder="Haircut" />
+        <input id="name" name="name" type="text" required className="input mt-1.5" placeholder="Haircut" />
       </div>
 
       <div>
-        <label htmlFor="recurrence_interval_days" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Rebook after (days)
+        <label htmlFor="recurrence_interval_days" className="label">
+          Rebook after
         </label>
-        <input
-          id="recurrence_interval_days"
-          name="recurrence_interval_days"
-          type="number"
-          min={1}
-          className={inputClasses}
-          placeholder="30"
-        />
+        <div className="relative mt-1.5">
+          <input
+            id="recurrence_interval_days"
+            name="recurrence_interval_days"
+            type="number"
+            min={1}
+            className="input pr-14 tabular-nums"
+            placeholder="30"
+          />
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">days</span>
+        </div>
       </div>
 
       <div>
-        <label htmlFor="default_price" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label htmlFor="default_price" className="label">
           Default price
         </label>
-        <input
-          id="default_price"
-          name="default_price"
-          type="number"
-          min={0}
-          step={0.01}
-          className={inputClasses}
-          placeholder="45.00"
-        />
+        <div className="relative mt-1.5">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">$</span>
+          <input
+            id="default_price"
+            name="default_price"
+            type="number"
+            min={0}
+            step={0.01}
+            className="input pl-7 tabular-nums"
+            placeholder="45.00"
+          />
+        </div>
       </div>
 
-      <SubmitButton />
+      <SubmitButton
+        pendingText="Adding…"
+        icon={<Icon name="plus" className="h-4 w-4" strokeWidth={2} />}
+        className="sm:col-span-2 lg:col-span-1"
+      >
+        Add service
+      </SubmitButton>
 
-      {state.error && (
-        <p className="sm:col-span-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50">
-          {state.error}
-        </p>
-      )}
+      {state.error && <Notice variant="error" className="sm:col-span-2 lg:col-span-4">{state.error}</Notice>}
     </form>
   );
 }

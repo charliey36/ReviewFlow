@@ -1,20 +1,10 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormState } from 'react-dom';
+import { PublicSuccess } from '@/components/public-shell';
+import { Notice } from '@/components/ui/notice';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { requestRebooking, type RequestRebookingResult } from './actions';
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="w-full rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {pending ? 'Sending\u2026' : 'Request this time'}
-    </button>
-  );
-}
 
 export function RequestRebookingForm({ customerId }: { customerId: string }) {
   const boundAction = requestRebooking.bind(null, customerId);
@@ -22,16 +12,17 @@ export function RequestRebookingForm({ customerId }: { customerId: string }) {
 
   if (state.success) {
     return (
-      <p className="rounded-xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-600">
-        Thanks — the business will reach out to confirm your appointment.
-      </p>
+      <PublicSuccess
+        title="Request sent"
+        message="Thanks — the business will reach out to confirm your appointment."
+      />
     );
   }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-5">
       <div>
-        <label htmlFor="preferred_time" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="preferred_time" className="label">
           Preferred day/time
         </label>
         <input
@@ -40,17 +31,16 @@ export function RequestRebookingForm({ customerId }: { customerId: string }) {
           type="text"
           required
           placeholder="e.g. Tuesday afternoon, next week"
-          className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500/20"
+          className="input mt-1.5 py-2.5"
         />
+        <p className="field-hint">The business will confirm the exact time with you.</p>
       </div>
 
-      {state.error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100">
-          {state.error}
-        </p>
-      )}
+      {state.error && <Notice variant="error">{state.error}</Notice>}
 
-      <SubmitButton />
+      <SubmitButton pendingText="Sending…" className="btn-lg w-full">
+        Request this time
+      </SubmitButton>
     </form>
   );
 }

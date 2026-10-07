@@ -1,39 +1,26 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormState } from 'react-dom';
 import type { Customer } from '@/lib/database.types';
+import { CopyButton } from '@/components/ui/copy-button';
+import { Notice } from '@/components/ui/notice';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { createReferralCode, type ReferralFormResult } from './actions';
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {pending ? 'Generating\u2026' : 'Generate code'}
-    </button>
-  );
-}
 
 export function CreateReferralForm({ customers }: { customers: Customer[] }) {
   const [state, formAction] = useFormState<ReferralFormResult, FormData>(createReferralCode, {});
 
   return (
     <div>
-      <form action={formAction} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex-1">
-          <label htmlFor="customer_id" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+      <form action={formAction} className="space-y-4">
+        <div>
+          <label htmlFor="customer_id" className="label">
             Referring customer
           </label>
-          <select
-            id="customer_id"
-            name="customer_id"
-            required
-            className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
-          >
-            <option value="">Select a customer\u2026</option>
+          <select id="customer_id" name="customer_id" required className="input mt-1.5" defaultValue="">
+            <option value="" disabled>
+              Select a customer…
+            </option>
             {customers.map((customer) => (
               <option key={customer.id} value={customer.id}>
                 {customer.name} ({customer.email})
@@ -41,18 +28,20 @@ export function CreateReferralForm({ customers }: { customers: Customer[] }) {
             ))}
           </select>
         </div>
-        <SubmitButton />
+        <SubmitButton pendingText="Generating…">Generate code</SubmitButton>
       </form>
 
-      {state.error && (
-        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50">
-          {state.error}
-        </p>
-      )}
+      {state.error && <Notice variant="error" className="mt-4">{state.error}</Notice>}
       {state.success && state.code && (
-        <p className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700 ring-1 ring-inset ring-brand-100 dark:bg-brand-950/40 dark:text-brand-300 dark:ring-brand-900/50">
-          Referral code generated: <span className="font-mono font-semibold">{state.code}</span>
-        </p>
+        <Notice variant="success" className="mt-4">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span>
+              Referral code generated:{' '}
+              <span className="font-mono font-semibold tracking-wide">{state.code}</span>
+            </span>
+            <CopyButton value={state.code} />
+          </div>
+        </Notice>
       )}
     </div>
   );

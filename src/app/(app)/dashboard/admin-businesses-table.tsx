@@ -1,4 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
+import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
 
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString(undefined, {
@@ -27,7 +30,7 @@ export async function AdminBusinessesTable() {
 
   // Look up each owner's email and customer count. Fine at prototype scale
   // (mirrors the simple per-row lookups already used in scripts/seed.mjs and
-  // the send-review-requests job) — would want batching for real scale.
+  // the send-review-requests job) - would want batching for real scale.
   const rows = await Promise.all(
     (businesses ?? []).map(async (business) => {
       const [{ data: userData }, { count: customerCount }] = await Promise.all([
@@ -47,72 +50,58 @@ export async function AdminBusinessesTable() {
   );
 
   return (
-    <div className="mt-8">
-      <div className="flex items-center gap-2">
-        <h2 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
-          All registered businesses
-        </h2>
-        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400">
-          admin only
-        </span>
+    <section className="card mt-6 overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4 sm:px-6">
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-sm font-semibold text-ink">All registered businesses</h2>
+          <Badge>Admin only</Badge>
+        </div>
+        <p className="text-[13px] text-ink-3">
+          {rows.length} business{rows.length === 1 ? '' : 'es'} signed up
+        </p>
       </div>
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-        {rows.length} business{rows.length === 1 ? '' : 'es'} signed up.
-      </p>
 
-      <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-md dark:border-slate-700/70 dark:bg-surface-card">
-        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-700">
-          <thead className="bg-slate-50/60 dark:bg-slate-800/60">
+      <div className="scroll-thin overflow-x-auto">
+        <table className="data-table data-table-hover">
+          <thead>
             <tr>
-              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Business
-              </th>
-              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Owner email
-              </th>
-              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Customers
-              </th>
-              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Delay
-              </th>
-              <th className="px-4 py-3.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Signed up
-              </th>
+              <th>Business</th>
+              <th>Owner email</th>
+              <th className="text-right">Customers</th>
+              <th className="text-right">Delay</th>
+              <th>Signed up</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+          <tbody>
             {rows.length > 0 ? (
               rows.map((row) => (
-                <tr key={row.id} className="transition-all duration-200 hover:bg-slate-50/70 dark:hover:bg-slate-700/50">
-                  <td className="px-4 py-4 text-sm font-medium text-slate-900 dark:text-white">
+                <tr key={row.id}>
+                  <td>
                     <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
-                        {(row.name?.trim()?.[0] || '?').toUpperCase()}
-                      </span>
-                      {row.name || (
-                        <span className="italic text-slate-400 dark:text-slate-500">Unnamed business</span>
+                      <Avatar name={row.name || '?'} />
+                      {row.name ? (
+                        <span className="font-medium text-ink">{row.name}</span>
+                      ) : (
+                        <span className="italic text-ink-4">Unnamed business</span>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{row.ownerEmail}</td>
-                  <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{row.customerCount}</td>
-                  <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">{row.delay_hours}h</td>
-                  <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300">
-                    {formatDateTime(row.created_at)}
-                  </td>
+                  <td>{row.ownerEmail}</td>
+                  <td className="text-right tabular-nums">{row.customerCount}</td>
+                  <td className="text-right tabular-nums">{row.delay_hours}h</td>
+                  <td className="whitespace-nowrap">{formatDateTime(row.created_at)}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                  No businesses registered yet.
+                <td colSpan={5}>
+                  <EmptyState icon="users" title="No businesses registered yet" className="py-8" />
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
   );
 }

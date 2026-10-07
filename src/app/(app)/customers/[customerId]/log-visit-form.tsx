@@ -1,45 +1,36 @@
 'use client';
 
-import { useRef } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useRef } from 'react';
+import { useActionToast } from '@/components/toast';
+import { useFormState } from 'react-dom';
+import { Notice } from '@/components/ui/notice';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { logVisit, type LogVisitResult } from './actions';
 import type { Service } from '@/lib/database.types';
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {pending ? 'Logging\u2026' : 'Log visit'}
-    </button>
-  );
-}
-
-const inputClasses =
-  'mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm transition-shadow focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500';
 
 export function LogVisitForm({ customerId, services }: { customerId: string; services: Service[] }) {
   const boundAction = logVisit.bind(null, customerId);
   const [state, formAction] = useFormState<LogVisitResult, FormData>(boundAction, {});
+  useActionToast(state, { title: 'Visit logged', description: 'Lifetime value and rebooking timing are updated.' });
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Clear the fields after a successful log so the same visit isn't
+  // submitted twice by accident.
+  useEffect(() => {
+    if (state.success) formRef.current?.reset();
+  }, [state.success]);
 
   return (
     <form
       ref={formRef}
-      action={async (fd) => {
-        const result = await formAction(fd);
-        return result;
-      }}
-      className="grid grid-cols-1 gap-3 sm:grid-cols-4 sm:items-end"
+      action={formAction}
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[1.2fr_0.8fr_1.2fr_auto] lg:items-end"
     >
       <div>
-        <label htmlFor="service_id" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label htmlFor="service_id" className="label">
           Service
         </label>
-        <select id="service_id" name="service_id" className={inputClasses}>
+        <select id="service_id" name="service_id" className="input mt-1.5">
           <option value="">General visit</option>
           {services.map((service) => (
             <option key={service.id} value={service.id}>
@@ -50,26 +41,35 @@ export function LogVisitForm({ customerId, services }: { customerId: string; ser
       </div>
 
       <div>
-        <label htmlFor="price" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label htmlFor="price" className="label">
           Price
         </label>
-        <input id="price" name="price" type="number" min={0} step={0.01} className={inputClasses} placeholder="45.00" />
+        <div className="relative mt-1.5">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">$</span>
+          <input
+            id="price"
+            name="price"
+            type="number"
+            min={0}
+            step={0.01}
+            className="input pl-7 tabular-nums"
+            placeholder="45.00"
+          />
+        </div>
       </div>
 
       <div>
-        <label htmlFor="notes" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Notes
+        <label htmlFor="notes" className="label">
+          Notes <span className="font-normal text-ink-4">(optional)</span>
         </label>
-        <input id="notes" name="notes" type="text" className={inputClasses} placeholder="Optional" />
+        <input id="notes" name="notes" type="text" className="input mt-1.5" placeholder="e.g. prefers mornings" />
       </div>
 
-      <SubmitButton />
+      <SubmitButton pendingText="Logging…" className="sm:col-span-2 lg:col-span-1">
+        Log visit
+      </SubmitButton>
 
-      {state.error && (
-        <p className="sm:col-span-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50">
-          {state.error}
-        </p>
-      )}
+      {state.error && <Notice variant="error" className="sm:col-span-2 lg:col-span-4">{state.error}</Notice>}
     </form>
   );
 }

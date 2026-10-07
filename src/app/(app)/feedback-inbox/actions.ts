@@ -14,5 +14,7 @@ export async function updateFeedbackStatus(feedbackId: string, status: 'acknowle
     .eq('id', feedbackId)
     .eq('business_id', business.id);
 
-  revalidatePath('/feedback-inbox');
+  // Revalidate the whole app layout (not just this page) so the unread-count
+  // badge on the sidebar's Feedback item updates immediately.
+  revalidatePath('/', 'layout');
 }

@@ -1,6 +1,11 @@
+import type { Metadata } from 'next';
 import { requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
+import { PageHeader } from '@/components/ui/page-header';
+import { SettingsTabs } from '@/components/settings-tabs';
 import { LoyaltyProgramForm } from './loyalty-program-form';
+
+export const metadata: Metadata = { title: 'Loyalty program' };
 
 export default async function LoyaltySettingsPage() {
   const business = await requireBusiness();
@@ -14,15 +19,15 @@ export default async function LoyaltySettingsPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Loyalty program</h1>
-      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-        Reward repeat visits, reviews, and referrals with points customers can redeem. Points are
-        tracked on an append-only ledger per customer — visible on each customer&apos;s detail page.
-      </p>
+      <PageHeader
+        title="Loyalty program"
+        icon="gift"
+        tone="rose"
+        description="Reward repeat visits, reviews and referrals with points customers can redeem. Points are tracked on an append-only ledger per customer, visible on each customer's detail page."
+        tabs={<SettingsTabs />}
+      />
 
-      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card sm:p-8">
-        <LoyaltyProgramForm program={program ?? null} />
-      </div>
+      <LoyaltyProgramForm program={program ?? null} />
     </div>
   );
 }

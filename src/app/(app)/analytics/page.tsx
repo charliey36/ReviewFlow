@@ -1,13 +1,22 @@
+import type { Metadata } from 'next';
 import { requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
 import { computeRebookingRate, computeRevenueAttribution, computeHealthScore } from '@/lib/health';
+import { PageHeader } from '@/components/ui/page-header';
+import { StatCard } from '@/components/ui/stat-card';
+import { SectionCard } from '@/components/ui/section-card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { CountUp } from '@/components/ui/count-up';
 
-const tierStyles: Record<string, string> = {
-  thriving: 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100 dark:bg-brand-950/40 dark:text-brand-300 dark:ring-brand-900/50',
-  steady: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-900/50',
-  at_risk: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900/50',
-  lapsed: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50',
-};
+export const metadata: Metadata = { title: 'Analytics' };
+
+// Order matters: it is the order of the stacked bar and the legend.
+const tiers = [
+  { key: 'thriving', label: 'Thriving', description: 'Frequent, recent, high spend', bar: 'bg-brand-500', dot: 'bg-brand-500' },
+  { key: 'steady', label: 'Steady', description: 'Healthy, regular activity', bar: 'bg-sky-500', dot: 'bg-sky-500' },
+  { key: 'at_risk', label: 'At risk', description: 'Slowing down \u2014 worth a nudge', bar: 'bg-amber-500', dot: 'bg-amber-500' },
+  { key: 'lapsed', label: 'Lapsed', description: 'No recent visits', bar: 'bg-red-500', dot: 'bg-red-500' },
+] as const;
 
 export default async function AnalyticsPage() {
   const business = await requireBusiness();
@@ -33,58 +42,130 @@ export default async function AnalyticsPage() {
     healthTierCounts[health.tier] += 1;
   }
 
+  const healthTotal = Object.values(healthTierCounts).reduce((sum, count) => sum + count, 0);
+  const rate = rebookingRate.rate;
+
   return (
     <div>
-      <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">Analytics</h1>
-      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-        Rebooking rate, revenue influenced by automated messages, and customer health distribution.
-      </p>
+      <PageHeader
+        title="Analytics"
+        icon="chart"
+        tone="emerald"
+        description="Rebooking rate, revenue influenced by automated messages, and customer health distribution."
+      />
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">30-day rebooking rate</p>
-          {rebookingRate.rate === null ? (
-            <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">Not enough visit data yet.</p>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <StatCard
+          label="30-day rebooking rate"
+          tone="sky"
+          icon="refresh"
+          value={
+            rate === null ? (
+              '\u2014'
+            ) : (
+              <CountUp value={rate} decimals={Number.isInteger(rate) ? 0 : 1} suffix="%" />
+            )
+          }
+        >
+          {rate === null ? (
+            <p className="text-xs leading-5 text-ink-3">
+              Not enough visit data yet. Log customer visits to see how many rebook within 30 days.
+            </p>
           ) : (
             <>
-              <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
-                {rebookingRate.rate}%
-              </p>
-              <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+              {/* Gauge with the 60-80% "healthy" benchmark band behind the fill. */}
+              <div className="relative h-2.5 rounded-full bg-surface-muted">
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-y-0 border-x border-dashed border-sky-500/60 bg-sky-500/15"
+                  style={{ left: '60%', width: '20%' }}
+                />
+                <div
+                  className="bar-grow relative h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600 shadow-[0_0_14px_rgb(14_165_233/0.45)]"
+                  style={{ width: `${Math.max(2, Math.min(100, rate))}%` }}
+                />
+              </div>
+              <div className="relative mt-1.5 h-4 text-2xs text-ink-4">
+                <span className="absolute left-0">0%</span>
+                <span className="absolute -translate-x-1/2" style={{ left: '70%' }}>
+                  healthy 60&ndash;80%
+                </span>
+                <span className="absolute right-0">100%</span>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-ink-3">
                 {rebookingRate.rebookedWithin30Days} of {rebookingRate.completedVisits} visits led to a rebooking
-                within 30 days. Industry benchmark: 60\u201380% is considered healthy.
+                within 30 days.
               </p>
             </>
           )}
-        </div>
+        </StatCard>
 
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Revenue from rebooking reminders</p>
-          <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
-            ${revenueAttribution.totalAttributed.toFixed(2)}
-          </p>
-          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-            {revenueAttribution.attributedVisitCount} visit{revenueAttribution.attributedVisitCount === 1 ? '' : 's'}{' '}
-            within 7 days of a rebooking reminder click. Estimate based on click-to-visit timing, not perfect
-            ground truth.
-          </p>
-        </div>
+        <StatCard
+          label="Revenue from rebooking reminders"
+          tone="emerald"
+          icon="chart"
+          value={<CountUp value={revenueAttribution.totalAttributed} prefix="$" decimals={2} />}
+          hint={`${revenueAttribution.attributedVisitCount} visit${
+            revenueAttribution.attributedVisitCount === 1 ? '' : 's'
+          } within 7 days of a reminder click. An estimate from click-to-visit timing, not perfect ground truth.`}
+        />
       </div>
 
-      <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-6 shadow-md dark:border-slate-700/70 dark:bg-surface-card">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Customer health distribution</h2>
-        <div className="mt-4 flex flex-wrap gap-3">
-          {Object.entries(healthTierCounts).map(([tier, count]) => (
-            <span key={tier} className={`rounded-full px-3 py-1.5 text-sm font-medium capitalize ${tierStyles[tier]}`}>
-              {tier.replace('_', ' ')}: {count}
-            </span>
-          ))}
-        </div>
-        <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
-          Based on recency, frequency, and spend of visits (not click/review activity). Customers with no logged
-          visits are excluded.
-        </p>
-      </div>
+      <SectionCard
+        className="mt-6"
+        title="Customer health distribution"
+        description="Based on recency, frequency and spend of visits (not click or review activity). Customers with no logged visits are excluded."
+      >
+        {healthTotal === 0 ? (
+          <EmptyState
+            icon="chart"
+            title="No visit data yet"
+            description="Once you log customer visits, you'll see how your customers split between thriving, steady, at-risk and lapsed."
+            className="py-8"
+          />
+        ) : (
+          <>
+            <div
+              className="flex h-3.5 overflow-hidden rounded-full bg-surface-muted"
+              role="img"
+              aria-label={tiers.map((tier) => `${tier.label}: ${healthTierCounts[tier.key]}`).join(', ')}
+            >
+              {tiers.map((tier) => {
+                const count = healthTierCounts[tier.key];
+                if (count === 0) return null;
+                return (
+                  <div
+                    key={tier.key}
+                    className={`bar-grow h-full border-r-2 border-surface last:border-r-0 ${tier.bar}`}
+                    style={{ width: `${(count / healthTotal) * 100}%` }}
+                  />
+                );
+              })}
+            </div>
+
+            <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">
+              {tiers.map((tier) => {
+                const count = healthTierCounts[tier.key];
+                return (
+                  <div key={tier.key}>
+                    <dt className="flex items-center gap-2 text-[13px] font-medium text-ink-2">
+                      <span className={`h-2 w-2 rounded-full ${tier.dot}`} aria-hidden="true" />
+                      {tier.label}
+                    </dt>
+                    <dd className="mt-1.5 flex items-baseline gap-2">
+                      <span className="text-3xl font-semibold tracking-[-0.03em] text-ink tabular-nums">{count}</span>
+                      <span className="text-xs text-ink-3 tabular-nums">
+                        {Math.round((count / healthTotal) * 100)}%
+                      </span>
+                    </dd>
+                    <p className="mt-1 text-xs leading-5 text-ink-3">{tier.description}</p>
+                  </div>
+                );
+              })}
+            </dl>
+          </>
+        )}
+      </SectionCard>
     </div>
   );
 }

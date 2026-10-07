@@ -4,6 +4,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 
 type SidebarContextValue = {
   isOpen: boolean;
+  /** False until the client has applied the viewport + stored preference. */
+  ready: boolean;
   open: () => void;
   close: () => void;
   toggle: () => void;
@@ -12,35 +14,49 @@ type SidebarContextValue = {
 const SidebarContext = createContext<SidebarContextValue | undefined>(undefined);
 
 const STORAGE_KEY = 'reviewflow-sidebar-open';
+const DESKTOP_QUERY = '(min-width: 1024px)';
 
+/**
+ * One sidebar for every breakpoint. On desktop it pushes content aside and
+ * remembers whether you collapsed it; on mobile it is a transient overlay
+ * that always starts closed and is never persisted (otherwise closing it on
+ * a phone would leave it collapsed the next time you open the desktop app).
+ */
 export function SidebarProvider({ children }: { children: ReactNode }) {
-  // Defaults to open on first load (including SSR) per spec. Any stored
-  // preference from a previous session is applied after mount.
+  // SSR default is "open" (desktop-first). `ready` lets the drawer render a
+  // mobile-closed state before hydration so the overlay never flashes open.
   const [isOpen, setIsOpen] = useState(true);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored === 'true' || stored === 'false') {
-        setIsOpen(stored === 'true');
+    if (!window.matchMedia(DESKTOP_QUERY).matches) {
+      setIsOpen(false);
+    } else {
+      try {
+        const stored = window.localStorage.getItem(STORAGE_KEY);
+        if (stored === 'true' || stored === 'false') {
+          setIsOpen(stored === 'true');
+        }
+      } catch {
+        // Ignore - falls back to the open-by-default state.
       }
-    } catch {
-      // Ignore — falls back to the open-by-default state.
     }
+    setReady(true);
   }, []);
 
   const persist = (next: boolean) => {
     setIsOpen(next);
+    if (!window.matchMedia(DESKTOP_QUERY).matches) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, String(next));
     } catch {
-      // Ignore (private browsing / storage disabled) — state just won't
-      // persist across reloads.
+      // Ignore (private browsing / storage disabled).
     }
   };
 
   const value: SidebarContextValue = {
     isOpen,
+    ready,
     open: () => persist(true),
     close: () => persist(false),
     toggle: () => persist(!isOpen),

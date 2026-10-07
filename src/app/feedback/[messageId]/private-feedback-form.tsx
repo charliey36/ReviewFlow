@@ -1,18 +1,49 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useState } from 'react';
+import { useFormState } from 'react-dom';
+import { PublicSuccess } from '@/components/public-shell';
+import { StarFilled } from '@/components/ui/icons';
+import { Notice } from '@/components/ui/notice';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { submitPrivateFeedback, type SubmitFeedbackResult } from './actions';
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+const ratingLabels = ['Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
+
+function StarRating() {
+  const [value, setValue] = useState<number | null>(null);
+  const [hover, setHover] = useState<number | null>(null);
+  const active = hover ?? value ?? 0;
+
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="w-full rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {pending ? 'Sending\u2026' : 'Send feedback'}
-    </button>
+    <div>
+      {/* Submitted only when a rating is chosen, matching an unselected radio group. */}
+      {value !== null && <input type="hidden" name="rating" value={value} />}
+
+      <div role="radiogroup" aria-label="Rating" className="flex items-center gap-1" onMouseLeave={() => setHover(null)}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            role="radio"
+            aria-checked={value === star}
+            aria-label={`${star} star${star === 1 ? '' : 's'}: ${ratingLabels[star - 1]}`}
+            onClick={() => setValue(value === star ? null : star)}
+            onMouseEnter={() => setHover(star)}
+            onFocus={() => setHover(star)}
+            onBlur={() => setHover(null)}
+            className="rounded-md p-1 transition-transform duration-150 hover:scale-110 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-500/30"
+          >
+            <StarFilled
+              className={`h-9 w-9 transition-colors duration-150 ${star <= active ? 'text-amber-400' : 'text-line-strong'}`}
+            />
+          </button>
+        ))}
+        <span className="ml-2 min-w-[4.5rem] text-sm font-medium text-ink-3" aria-live="polite">
+          {active > 0 ? ratingLabels[active - 1] : ''}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -22,33 +53,26 @@ export function PrivateFeedbackForm({ messageId }: { messageId: string }) {
 
   if (state.success) {
     return (
-      <p className="rounded-xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-600">
-        Thanks — your feedback has been sent directly to the business.
-      </p>
+      <PublicSuccess
+        title="Thank you"
+        message="Your feedback has been sent directly to the business."
+      />
     );
   }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-slate-700">
-          How would you rate your experience? <span className="text-slate-400">(optional)</span>
-        </label>
-        <div className="mt-2 flex gap-2">
-          {[1, 2, 3, 4, 5].map((value) => (
-            <label
-              key={value}
-              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-sm font-medium text-slate-600 transition-colors hover:border-slate-300 [&:has(input:checked)]:border-slate-900 [&:has(input:checked)]:bg-slate-900 [&:has(input:checked)]:text-white"
-            >
-              <input type="radio" name="rating" value={value} className="sr-only" />
-              {value}
-            </label>
-          ))}
+        <p className="label">
+          How would you rate your experience? <span className="font-normal text-ink-4">(optional)</span>
+        </p>
+        <div className="mt-2">
+          <StarRating />
         </div>
       </div>
 
       <div>
-        <label htmlFor="comment" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="comment" className="label">
           Your feedback
         </label>
         <textarea
@@ -57,18 +81,16 @@ export function PrivateFeedbackForm({ messageId }: { messageId: string }) {
           required
           rows={5}
           maxLength={5000}
-          className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500/20"
+          className="input mt-1.5 resize-y leading-6"
           placeholder="Tell us what happened..."
         />
       </div>
 
-      {state.error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-100">
-          {state.error}
-        </p>
-      )}
+      {state.error && <Notice variant="error">{state.error}</Notice>}
 
-      <SubmitButton />
+      <SubmitButton pendingText="Sending…" className="btn-lg w-full">
+        Send feedback
+      </SubmitButton>
     </form>
   );
 }

@@ -15,18 +15,24 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 const STORAGE_KEY = 'reviewflow-theme';
 
 function applyThemeClass(theme: Theme) {
-  document.documentElement.classList.toggle('dark', theme === 'dark');
+  const root = document.documentElement;
+  // Briefly enable cross-fading on every surface so the switch feels
+  // intentional rather than a hard flip (see .theme-transition in globals.css).
+  root.classList.add('theme-transition');
+  root.classList.toggle('dark', theme === 'dark');
+  window.setTimeout(() => root.classList.remove('theme-transition'), 300);
 }
 
 /**
- * Resolves the initial theme synchronously before paint via an inline
- * script in the root layout (see `ThemeScript`) so there's no
- * light-flash-then-dark-swap on load. This provider just keeps React state
- * in sync with whatever that script already applied to <html>, then
- * persists any future changes to localStorage.
+ * Dark is the product's default look. The initial theme is resolved
+ * synchronously before paint by an inline script in the root layout (see
+ * THEME_BOOTSTRAP_SCRIPT), so there is no flash of the wrong theme. This
+ * provider keeps React state in sync with whatever that script applied to
+ * <html>, and persists an explicit choice (the toggle) to localStorage.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
+  // Matches the default; the effect below corrects it for anyone who chose light.
+  const [theme, setThemeState] = useState<Theme>('dark');
 
   useEffect(() => {
     // On mount, read back whatever the inline bootstrap script already
@@ -63,17 +69,17 @@ export function useTheme() {
 /**
  * Inline script source, inlined directly in the root layout's <head> (not
  * loaded as a separate component) so it runs before first paint and avoids
- * a flash of the wrong theme. Priority: localStorage preference, then OS
- * `prefers-color-scheme`, then light.
+ * a flash of the wrong theme. Dark by default; the only thing that switches
+ * it to light is an explicit choice stored by the theme toggle (this also
+ * means storage being unavailable still yields dark, not a broken state).
  */
 export const THEME_BOOTSTRAP_SCRIPT = `
 (function () {
+  var theme = 'dark';
   try {
     var stored = localStorage.getItem('${STORAGE_KEY}');
-    var theme = stored === 'dark' || stored === 'light'
-      ? stored
-      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    if (theme === 'dark') document.documentElement.classList.add('dark');
+    if (stored === 'light' || stored === 'dark') theme = stored;
   } catch (e) {}
+  if (theme === 'dark') document.documentElement.classList.add('dark');
 })();
 `;

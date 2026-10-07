@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import type { Customer } from '@/lib/database.types';
+import { Notice } from '@/components/ui/notice';
+import { Spinner } from '@/components/ui/submit-button';
+import { useToast } from '@/components/toast';
 import { redeemReferralCode } from './actions';
 
 export function RedeemReferralForm({ customers }: { customers: Customer[] }) {
@@ -9,6 +12,7 @@ export function RedeemReferralForm({ customers }: { customers: Customer[] }) {
   const [refereeId, setRefereeId] = useState('');
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
   const [pending, setPending] = useState(false);
+  const toast = useToast();
 
   return (
     <form
@@ -20,16 +24,16 @@ export function RedeemReferralForm({ customers }: { customers: Customer[] }) {
         if (result?.error) {
           setMessage({ type: 'error', text: result.error });
         } else {
-          setMessage({ type: 'success', text: 'Referral redeemed — both customers rewarded.' });
+          toast.push({ variant: 'success', title: 'Referral redeemed', description: 'Both customers have been rewarded.' });
           setCode('');
           setRefereeId('');
         }
         setPending(false);
       }}
-      className="flex flex-col gap-3 sm:flex-row sm:items-end"
+      className="space-y-4"
     >
-      <div className="flex-1">
-        <label htmlFor="code" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+      <div>
+        <label htmlFor="code" className="label">
           Referral code
         </label>
         <input
@@ -37,12 +41,13 @@ export function RedeemReferralForm({ customers }: { customers: Customer[] }) {
           value={code}
           onChange={(e) => setCode(e.target.value)}
           required
-          className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono uppercase shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
+          autoComplete="off"
+          className="input mt-1.5 font-mono uppercase tracking-wider"
           placeholder="ABC123"
         />
       </div>
-      <div className="flex-1">
-        <label htmlFor="referee" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+      <div>
+        <label htmlFor="referee" className="label">
           New customer
         </label>
         <select
@@ -50,9 +55,11 @@ export function RedeemReferralForm({ customers }: { customers: Customer[] }) {
           value={refereeId}
           onChange={(e) => setRefereeId(e.target.value)}
           required
-          className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
+          className="input mt-1.5"
         >
-          <option value="">Select a customer\u2026</option>
+          <option value="" disabled>
+            Select a customer…
+          </option>
           {customers.map((customer) => (
             <option key={customer.id} value={customer.id}>
               {customer.name} ({customer.email})
@@ -60,25 +67,19 @@ export function RedeemReferralForm({ customers }: { customers: Customer[] }) {
           ))}
         </select>
       </div>
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:bg-slate-700"
-      >
-        {pending ? 'Redeeming\u2026' : 'Redeem'}
+
+      <button type="submit" disabled={pending} aria-busy={pending} className="btn btn-secondary">
+        {pending ? (
+          <>
+            <Spinner />
+            Redeeming…
+          </>
+        ) : (
+          'Redeem code'
+        )}
       </button>
 
-      {message && (
-        <p
-          className={`sm:col-span-3 w-full rounded-lg px-3 py-2 text-sm ${
-            message.type === 'error'
-              ? 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-100 dark:bg-red-950/40 dark:text-red-300 dark:ring-red-900/50'
-              : 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100 dark:bg-brand-950/40 dark:text-brand-300 dark:ring-brand-900/50'
-          }`}
-        >
-          {message.text}
-        </p>
-      )}
+      {message && <Notice variant={message.type}>{message.text}</Notice>}
     </form>
   );
 }
