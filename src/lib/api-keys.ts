@@ -5,11 +5,11 @@ const hash = (key: string) => createHash('sha256').update(key).digest('hex');
 
 /** Creates (or replaces) the business's API key. Returns the plaintext key: shown once, never stored. */
 export async function generateApiKey(businessId: string): Promise<string> {
-  const key = `rf_${randomBytes(24).toString('base64url')}`;
+  const key = `rf_live_${randomBytes(24).toString('base64url')}`;
   const { error } = await createAdminClient()
     .from('api_keys')
     .upsert(
-      { business_id: businessId, key_hash: hash(key), key_prefix: key.slice(0, 7), is_active: true },
+      { business_id: businessId, key_hash: hash(key), key_prefix: key.slice(0, 12), is_active: true },
       { onConflict: 'business_id' }
     );
   if (error) throw new Error(`Failed to save API key: ${error.message}`);

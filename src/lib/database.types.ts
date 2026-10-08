@@ -65,6 +65,12 @@ export type Database = {
         Update: { synced_at?: string | null };
         Relationships: [];
       };
+      integration_events: {
+        Row: { id: string; business_id: string; source: 'api' | 'test'; endpoint: string; status: 'imported' | 'updated' | 'duplicate' | 'failed'; message: string; payload: unknown; created_at: string };
+        Insert: { id?: string; business_id: string; source?: 'api' | 'test'; endpoint: string; status: 'imported' | 'updated' | 'duplicate' | 'failed'; message: string; payload?: unknown };
+        Update: { message?: string };
+        Relationships: [];
+      };
       business_members: {
         Row: {
           id: string;

@@ -18,7 +18,7 @@ export function ApiKeyPanel({ initialKey, prefix }: { initialKey: string | null;
       const res = await regenerateApiKey();
       if (res.key) {
         setKey(res.key);
-        setCurrentPrefix(res.key.slice(0, 7));
+        setCurrentPrefix(res.key.slice(0, 12));
         setError('');
       } else setError(res.error ?? 'Failed.');
     });

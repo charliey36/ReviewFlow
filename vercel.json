@@ -1,16 +1,7 @@
 {
   "crons": [
-    {
-      "path": "/api/send-review-requests?secret=3ed1e2087e9637c3680a0ad97223d9d21a95e9b9846701dd",
-      "schedule": "0 8 * * *"
-    },
-    {
-      "path": "/api/send-messages?secret=3ed1e2087e9637c3680a0ad97223d9d21a95e9b9846701dd",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/scan-customer-lifecycle?secret=3ed1e2087e9637c3680a0ad97223d9d21a95e9b9846701dd",
-      "schedule": "0 3 * * *"
-    }
+    { "path": "/api/send-review-requests", "schedule": "0 8 * * *" },
+    { "path": "/api/send-messages", "schedule": "0 9 * * *" },
+    { "path": "/api/scan-customer-lifecycle", "schedule": "0 3 * * *" }
   ]
 }

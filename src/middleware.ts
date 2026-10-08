@@ -42,6 +42,7 @@ export async function middleware(request: NextRequest) {
   const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password';
   const isPublicApiRoute = pathname.startsWith('/api/track') ||
     pathname.startsWith('/api/integrations') ||
+    pathname.startsWith('/integrations/docs') ||
     pathname.startsWith('/api/sync-demo-company') ||
     pathname.startsWith('/api/unsubscribe') ||
     pathname.startsWith('/api/send-review-requests') ||

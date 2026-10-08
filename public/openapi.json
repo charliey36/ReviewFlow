@@ -38,7 +38,7 @@
               "customerCreated": { "type": "boolean" },
               "duplicate": { "type": "boolean" } } } } }
           },
-          "400": { "description": "Validation failed ({ success:false, error, errors[] })" },
+          "400": { "description": "Validation failed ({ success:false, errors[] })" },
           "401": { "description": "Invalid or missing x-api-key" }
         }
       }
