@@ -15,8 +15,6 @@ export async function saveSettings(
 
   const name = String(formData.get('name') ?? '').trim();
   const googleReviewUrl = String(formData.get('google_review_url') ?? '').trim();
-  const delayHoursRaw = String(formData.get('delay_hours') ?? '').trim();
-  const delayHours = Number(delayHoursRaw);
 
   const windowDays = Math.round(Number(formData.get('review_request_window_days')));
   const rebookDays = Math.round(Number(formData.get('rebooking_reminder_interval_days')));
@@ -37,18 +35,14 @@ export async function saveSettings(
     }
   }
 
-  if (!Number.isFinite(delayHours) || delayHours <= 0) {
-    return { error: 'Delay must be a positive number of hours.' };
-  }
-
   const { error } = await supabase
     .from('businesses')
     .update({
       name,
       google_review_url: googleReviewUrl,
-      delay_hours: delayHours,
       review_request_window_days: windowDays,
       rebooking_reminder_interval_days: rebookDays,
+      rebooking_reminders_enabled: formData.get('rebooking_reminders_enabled') === 'on',
     })
     .eq('id', business.id);
 

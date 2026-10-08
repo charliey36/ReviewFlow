@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Icon, type IconName } from '@/components/ui/icons';
 
 type NavItem = {
@@ -24,6 +24,7 @@ export const navGroups: { label: string; items: NavItem[] }[] = [
     label: 'Audience',
     items: [
       { href: '/customers', label: 'Customers', icon: 'users' },
+      { href: '/customers/import', label: 'Import', icon: 'upload' },
       { href: '/segments', label: 'Segments', icon: 'funnel' },
       { href: '/referrals', label: 'Referrals', icon: 'userPlus' },
       { href: '/feedback-inbox', label: 'Feedback', icon: 'chat', badge: 'feedback' },
@@ -50,6 +51,22 @@ export function isActivePath(pathname: string, href: string) {
  */
 export function SidebarNav({ feedbackCount = 0 }: { feedbackCount?: number }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  // The most specific matching item wins, so /customers/import doesn't also light up Customers.
+  const allHrefs = navGroups.flatMap((g) => g.items.map((i) => i.href));
+  const activeHref = allHrefs
+    .filter((h) => isActivePath(pathname, h))
+    .sort((a, b) => b.length - a.length)[0];
+
+  // Clicking a section always loads fresh data: on the same page it refreshes in place,
+  // from inside it (e.g. a customer) it goes back to the list.
+  function handleClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    e.preventDefault();
+    if (href === pathname) router.refresh();
+    else router.push(href);
+  }
 
   return (
     <nav aria-label="Main" className="scroll-thin flex-1 overflow-y-auto px-3 pb-4 pt-2">
@@ -58,13 +75,14 @@ export function SidebarNav({ feedbackCount = 0 }: { feedbackCount?: number }) {
           <p className="eyebrow px-3 pb-2 text-ink-4">{group.label}</p>
           <ul className="space-y-1">
             {group.items.map((item) => {
-              const active = isActivePath(pathname, item.href);
+              const active = item.href === activeHref;
               const badgeCount = item.badge === 'feedback' ? feedbackCount : 0;
 
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
+                    onClick={(e) => handleClick(e, item.href)}
                     aria-current={active ? 'page' : undefined}
                     className={`group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 ${
                       active

@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Icon } from '@/components/ui/icons';
 import { AddCustomerPanel } from './add-customer-panel';
 import { CustomersTable, type CustomerRow } from './customers-table';
+import { SendHeldButton } from './review-row-actions';
 
 export const metadata: Metadata = { title: 'Customers' };
 
@@ -38,6 +39,19 @@ export default async function CustomersPage({
     throw new Error(`Failed to load customers: ${error.message}`);
   }
 
+  // Latest review request per customer from the import / scheduling pipeline.
+  const { data: reviewMessages } = await supabase
+    .from('messages')
+    .select('id, customer_id, status, send_at, sent_at')
+    .eq('business_id', business.id)
+    .eq('purpose', 'review_request')
+    .in('status', ['queued', 'pending', 'sent', 'failed'])
+    .order('created_at', { ascending: false })
+    .limit(5000);
+  const latestReview = new Map<string, NonNullable<typeof reviewMessages>[number]>();
+  (reviewMessages ?? []).forEach((m) => latestReview.has(m.customer_id) || latestReview.set(m.customer_id, m));
+  const heldCount = (reviewMessages ?? []).filter((m) => m.status === 'queued').length;
+
   // Dates are formatted here (server) and passed down as strings: formatting
   // in the client component would differ between server and browser locale
   // and trigger hydration mismatches.
@@ -45,6 +59,26 @@ export default async function CustomersPage({
     const request = Array.isArray(customer.review_requests)
       ? customer.review_requests[0]
       : customer.review_requests;
+
+    const review = latestReview.get(customer.id);
+    if (review) {
+      return {
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        addedLabel: formatDate(customer.created_at),
+        status: review.status === 'queued' ? 'held' : review.status,
+        requestLabel:
+          review.status === 'sent' && review.sent_at
+            ? `Sent ${formatDateTime(review.sent_at)}`
+            : review.status === 'queued'
+              ? 'Waiting for you to send'
+              : review.status === 'failed'
+                ? 'Failed after retries'
+                : `Scheduled ${formatDateTime(review.send_at)}`,
+        messageId: review.status === 'queued' || review.status === 'pending' ? review.id : null,
+      };
+    }
 
     return {
       id: customer.id,
@@ -57,6 +91,7 @@ export default async function CustomersPage({
           ? `Sent ${formatDateTime(request.sent_at)}`
           : `Due ${formatDateTime(request.send_at)}`
         : null,
+      messageId: null,
     };
   });
 
@@ -70,12 +105,15 @@ export default async function CustomersPage({
         tone="sky"
         description={`${rows.length.toLocaleString('en-US')} ${
           rows.length === 1 ? 'customer' : 'customers'
-        }. Add a customer to automatically schedule a review request email.`}
+        }. Review requests are emailed the day after a service, between 9am and 12pm.`}
         actions={
-          <Link href="/customers/import" className="btn btn-secondary">
-            <Icon name="upload" className="h-4 w-4" />
-            Import CSV
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {heldCount > 0 && <SendHeldButton count={heldCount} />}
+            <Link href="/customers/import" className="btn btn-secondary">
+              <Icon name="upload" className="h-4 w-4" />
+              Import CSV
+            </Link>
+          </div>
         }
       />
 

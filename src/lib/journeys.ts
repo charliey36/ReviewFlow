@@ -1,3 +1,4 @@
+import { snapToSendWindow } from '@/lib/send-window';
 /**
  * Minimal journey engine. A journey (see `journeys` table) is an ordered
  * list of steps: [{wait_hours, channel, purpose}, ...]. Enrolling a
@@ -18,7 +19,8 @@ import type { Database, Journey } from '@/lib/database.types';
 export async function enrollCustomerInJourney(
   supabase: SupabaseClient<Database>,
   journey: Journey,
-  customerId: string
+  customerId: string,
+  firstSendAt?: Date
 ): Promise<void> {
   // Don't double-enroll: if this customer already has an active enrollment
   // in this journey, leave it alone.
@@ -49,7 +51,7 @@ export async function enrollCustomerInJourney(
   if (enrollmentError || !enrollment) return;
 
   const firstStep = steps[0];
-  const sendAt = new Date(Date.now() + firstStep.wait_hours * 60 * 60 * 1000).toISOString();
+  const sendAt = (firstSendAt ?? snapToSendWindow(new Date(Date.now() + firstStep.wait_hours * 60 * 60 * 1000))).toISOString();
 
   await supabase.from('messages').insert({
     business_id: journey.business_id,
@@ -102,7 +104,7 @@ export async function advanceJourneyEnrollment(
     .update({ current_step: nextStepIndex })
     .eq('id', enrollmentId);
 
-  const sendAt = new Date(Date.now() + nextStep.wait_hours * 60 * 60 * 1000).toISOString();
+  const sendAt = snapToSendWindow(new Date(Date.now() + nextStep.wait_hours * 60 * 60 * 1000)).toISOString();
 
   await supabase.from('messages').insert({
     business_id: enrollment.business_id,

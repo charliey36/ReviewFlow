@@ -4,6 +4,9 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SectionCard } from '@/components/ui/section-card';
 import { ImportCustomersForm } from './import-customers-form';
 
+// Allow long imports on Vercel (default is 10s).
+export const maxDuration = 60;
+
 export const metadata: Metadata = { title: 'Import customers' };
 
 export default async function ImportCustomersPage() {
@@ -16,7 +19,7 @@ export default async function ImportCustomersPage() {
         title="Import customers"
         icon="upload"
         tone="sky"
-        description="Upload a CSV of your existing customers to add them all at once. A review request is scheduled for each new customer, same as adding them one at a time."
+        description="Export your jobs from Excel, Google Sheets, ServiceM8, Jobber or Tradify, upload the file here, then review requests go out the day after each job, between 9am and 12pm."
       />
 
       <SectionCard>

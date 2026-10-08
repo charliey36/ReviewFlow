@@ -48,7 +48,17 @@ export async function importCustomers(
     return { error: `This file has ${rows.length} rows; the limit is ${MAX_ROWS} per import.` };
   }
 
-  const summary = await bulkImportCustomers(supabase, business.id, business.delay_hours, rows, business.review_request_window_days ?? 14);
+  let summary: BulkImportSummary;
+  try {
+    summary = await bulkImportCustomers(
+      supabase,
+      { id: business.id, delay_hours: business.delay_hours, review_request_window_days: business.review_request_window_days ?? 14 },
+      rows,
+      formData.get('auto_send') === 'on'
+    );
+  } catch (e) {
+    return { error: `Import failed: ${e instanceof Error ? e.message : 'unknown error'}. Nothing is lost: upload the file again and already-imported rows are skipped.` };
+  }
 
   revalidatePath('/customers');
   revalidatePath('/dashboard');

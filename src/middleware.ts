@@ -43,7 +43,6 @@ export async function middleware(request: NextRequest) {
   const isPublicApiRoute = pathname.startsWith('/api/track') ||
     pathname.startsWith('/api/integrations') ||
     pathname.startsWith('/integrations/docs') ||
-    pathname.startsWith('/api/sync-demo-company') ||
     pathname.startsWith('/api/unsubscribe') ||
     pathname.startsWith('/api/send-review-requests') ||
     pathname.startsWith('/api/send-messages') ||

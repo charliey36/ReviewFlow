@@ -7,6 +7,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge, requestStatusTone } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Icon } from '@/components/ui/icons';
+import { ReviewRowActions } from './review-row-actions';
 
 export type CustomerRow = {
   id: string;
@@ -15,14 +16,17 @@ export type CustomerRow = {
   addedLabel: string;
   status: string | null;
   requestLabel: string | null;
+  /** Set while a review request is scheduled or held and can be sent/cancelled. */
+  messageId: string | null;
 };
 
 const filters = [
   { key: 'all', label: 'All' },
-  { key: 'pending', label: 'Pending' },
+  { key: 'held', label: 'Held' },
+  { key: 'pending', label: 'Scheduled' },
   { key: 'sent', label: 'Sent' },
   { key: 'failed', label: 'Failed' },
-  { key: 'none', label: 'Not scheduled' },
+  { key: 'none', label: 'None' },
 ] as const;
 
 type FilterKey = (typeof filters)[number]['key'];
@@ -45,10 +49,10 @@ export function CustomersTable({ rows }: { rows: CustomerRow[] }) {
   const [filter, setFilter] = useState<FilterKey>('all');
 
   const counts = useMemo(() => {
-    const result: Record<FilterKey, number> = { all: rows.length, pending: 0, sent: 0, failed: 0, none: 0 };
+    const result: Record<FilterKey, number> = { all: rows.length, held: 0, pending: 0, sent: 0, failed: 0, none: 0 };
     for (const row of rows) {
       if (row.status === null) result.none += 1;
-      else if (row.status === 'pending' || row.status === 'sent' || row.status === 'failed') result[row.status] += 1;
+      else if (row.status === 'held' || row.status === 'pending' || row.status === 'sent' || row.status === 'failed') result[row.status] += 1;
     }
     return result;
   }, [rows]);
@@ -155,7 +159,7 @@ export function CustomersTable({ rows }: { rows: CustomerRow[] }) {
                 <th>Customer</th>
                 <th className="hidden sm:table-cell">Added</th>
                 <th>Review request</th>
-                <th className="w-10" aria-hidden="true" />
+                <th aria-hidden="true" />
               </tr>
             </thead>
             <tbody>
@@ -164,7 +168,7 @@ export function CustomersTable({ rows }: { rows: CustomerRow[] }) {
                   key={row.id}
                   className="group cursor-pointer"
                   onClick={(event) => {
-                    if ((event.target as HTMLElement).closest('a')) return;
+                    if ((event.target as HTMLElement).closest('a, button')) return;
                     router.push(`/customers/${row.id}`);
                   }}
                 >
@@ -187,10 +191,11 @@ export function CustomersTable({ rows }: { rows: CustomerRow[] }) {
                         <span className="text-xs text-ink-3">{row.requestLabel}</span>
                       </div>
                     ) : (
-                      <span className="text-[13px] text-ink-4">No request scheduled</span>
+                      <span className="text-[13px] text-ink-4">No review request</span>
                     )}
                   </td>
                   <td className="text-right">
+                    {row.messageId && <ReviewRowActions messageId={row.messageId} />}
                     <Icon
                       name="chevronRight"
                       className="ml-auto h-4 w-4 text-ink-4 opacity-0 transition duration-150 group-hover:translate-x-0.5 group-hover:opacity-100"

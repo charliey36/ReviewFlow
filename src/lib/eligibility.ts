@@ -1,3 +1,4 @@
+import { reviewSendTime } from '@/lib/send-window';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
 
@@ -37,29 +38,27 @@ export function parseServiceDate(raw: string): string | null {
 }
 
 /**
- * Schedules the review request (legacy single send + review_sequence journey)
- * for a customer who has just received a service. Skips if one is already pending.
+ * Schedules the review request for a customer who has just received a service:
+ * emailed 09:00 the next day (UK time), followed by the day-3 / day-7 reminders.
+ * Skips if a request is already queued or scheduled.
  */
 export async function scheduleReviewRequest(
   supabase: SupabaseClient<Database>,
   businessId: string,
-  delayHours: number,
-  customerId: string
+  _delayHours: number,
+  customerId: string,
+  serviceDate: string = todayIso()
 ) {
-  const { data: pending } = await supabase
-    .from('review_requests')
+  const { data: active } = await supabase
+    .from('messages')
     .select('id')
     .eq('customer_id', customerId)
-    .eq('status', 'pending')
+    .eq('purpose', 'review_request')
+    .in('status', ['queued', 'pending'])
     .limit(1);
-  if (pending && pending.length > 0) return;
+  if (active && active.length > 0) return;
 
-  await supabase.from('review_requests').insert({
-    business_id: businessId,
-    customer_id: customerId,
-    send_at: new Date(Date.now() + delayHours * 3_600_000).toISOString(),
-  });
-
+  const sendAt = reviewSendTime(serviceDate);
   const { data: journey } = await supabase
     .from('journeys')
     .select('*')
@@ -67,8 +66,24 @@ export async function scheduleReviewRequest(
     .eq('key', 'review_sequence')
     .eq('is_active', true)
     .maybeSingle();
+
   if (journey) {
     const { enrollCustomerInJourney } = await import('@/lib/journeys');
-    await enrollCustomerInJourney(supabase, journey, customerId);
+    await enrollCustomerInJourney(supabase, journey, customerId, sendAt);
+  } else {
+    await supabase.from('messages').insert({
+      business_id: businessId,
+      customer_id: customerId,
+      purpose: 'review_request',
+      channel: 'email',
+      send_at: sendAt.toISOString(),
+    });
   }
+}
+
+/** Parses "350", "£1,250.50" etc. Empty = 0. Returns null if not a valid non-negative number. */
+export function parseAmount(v: unknown): number | null {
+  if (v === undefined || v === null || v === '') return 0;
+  const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v.replace(/[£$€,\s]/g, '')) : NaN;
+  return Number.isFinite(n) && n >= 0 && n <= 1_000_000 ? n : null;
 }

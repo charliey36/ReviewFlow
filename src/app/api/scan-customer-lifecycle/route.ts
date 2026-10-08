@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
   const supabase = createAdminClient();
 
-  const { data: businesses, error: businessesError } = await supabase.from('businesses').select('id, rebooking_reminder_interval_days');
+  const { data: businesses, error: businessesError } = await supabase.from('businesses').select('id, rebooking_reminder_interval_days, rebooking_reminders_enabled');
   if (businessesError) {
     return NextResponse.json({ error: businessesError.message }, { status: 500 });
   }
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       supabase.from('customers').select('*').eq('business_id', business.id).is('unsubscribed_at', null),
     ]);
 
-    const rebookingJourney = journeys?.find((j) => j.key === 'rebooking_reminder');
+    const rebookingJourney = business.rebooking_reminders_enabled === false ? undefined : journeys?.find((j) => j.key === 'rebooking_reminder');
     const winBackJourney = journeys?.find((j) => j.key === 'win_back');
     const birthdayJourney = journeys?.find((j) => j.key === 'birthday');
 

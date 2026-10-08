@@ -17,6 +17,7 @@ export type Database = {
           stripe_subscription_id: string | null;
           review_request_window_days: number;
           rebooking_reminder_interval_days: number;
+          rebooking_reminders_enabled: boolean;
           onboarding_completed_at: string | null;
           welcome_email_sent_at: string | null;
           campaign_email_sent_at: string | null;
@@ -46,6 +47,7 @@ export type Database = {
           stripe_subscription_id?: string | null;
           review_request_window_days?: number;
           rebooking_reminder_interval_days?: number;
+          rebooking_reminders_enabled?: boolean;
           onboarding_completed_at?: string | null;
           welcome_email_sent_at?: string | null;
           campaign_email_sent_at?: string | null;
@@ -230,7 +232,8 @@ export type Database = {
           channel: 'email' | 'sms' | 'whatsapp';
           journey_enrollment_id: string | null;
           sequence_step: number;
-          status: 'pending' | 'sent' | 'failed' | 'cancelled';
+          status: 'queued' | 'pending' | 'sent' | 'failed' | 'cancelled';
+          visit_id: string | null;
           send_at: string;
           sent_at: string | null;
           attempts: number;
@@ -248,7 +251,8 @@ export type Database = {
           channel?: 'email' | 'sms' | 'whatsapp';
           journey_enrollment_id?: string | null;
           sequence_step?: number;
-          status?: 'pending' | 'sent' | 'failed' | 'cancelled';
+          status?: 'queued' | 'pending' | 'sent' | 'failed' | 'cancelled';
+          visit_id?: string | null;
           send_at: string;
           sent_at?: string | null;
           attempts?: number;
@@ -258,7 +262,8 @@ export type Database = {
           metadata?: Record<string, unknown>;
         };
         Update: {
-          status?: 'pending' | 'sent' | 'failed' | 'cancelled';
+          status?: 'queued' | 'pending' | 'sent' | 'failed' | 'cancelled';
+          send_at?: string;
           channel?: 'email' | 'sms' | 'whatsapp';
           sent_at?: string | null;
           attempts?: number;

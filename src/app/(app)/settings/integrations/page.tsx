@@ -67,7 +67,7 @@ export default async function IntegrationsPage() {
         </SectionCard>
 
         <SectionCard title="Test import" description="Sends a sample customer through the same pipeline as the endpoint, no Zapier needed.">
-          <ActionButton kind="test" label="Test Import" />
+          <ActionButton label="Test Import" />
         </SectionCard>
 
         <SectionCard
@@ -95,12 +95,6 @@ export default async function IntegrationsPage() {
           )}
         </SectionCard>
 
-        <SectionCard
-          title="Demo company database"
-          description="Simulated company records (table demo_company_records in Supabase). Add a row there, then sync to import it."
-        >
-          <ActionButton kind="sync" label="Sync now" />
-        </SectionCard>
       </div>
     </div>
   );

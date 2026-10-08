@@ -1,7 +1,9 @@
-import { parseServiceDate } from '@/lib/eligibility';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
-import { enrollCustomerInJourney } from '@/lib/journeys';
+import { reviewSendTime } from '@/lib/send-window';
+import { daysSinceService, parseAmount, parseServiceDate } from '@/lib/eligibility';
+
+type Db = SupabaseClient<Database>;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -9,7 +11,15 @@ export function isValidEmail(email: string): boolean {
   return EMAIL_PATTERN.test(email);
 }
 
-export type BulkImportRow = { name: string; email: string; phone?: string; lastServiceDate?: string };
+/** One CSV row: name,email,service,date (phone and amount are optional extras). */
+export type BulkImportRow = {
+  name: string;
+  email: string;
+  service: string;
+  date: string;
+  phone?: string;
+  amountSpent?: string;
+};
 
 export type BulkImportRowResult =
   | { row: number; status: 'created'; name: string; email: string }
@@ -18,107 +28,275 @@ export type BulkImportRowResult =
 
 export type BulkImportSummary = {
   totalRows: number;
+  /** Rows imported (each one is a service visit). */
   created: number;
   duplicates: number;
   errors: number;
+  /** Customers that did not exist before this import. */
+  newCustomers: number;
+  /** Customers added to the review queue (or scheduled, if auto-send). */
+  queued: number;
+  /** Imported customers not queued: service older than the review window, or already queued. */
+  notQueued: number;
+  autoSend: boolean;
   results: BulkImportRowResult[];
 };
 
+const chunks = <T,>(items: T[], size: number): T[][] => {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+};
+
+type Valid = { row: number; name: string; email: string; service: string; date: string; phone: string | null; amount: number | null };
+type Known = { id: string; total_spend: number; visit_count: number; last_service_date: string | null; unsubscribed_at: string | null };
+
 /**
- * Shared bulk-insert logic used by CSV import. Validates each row, skips
- * rows that duplicate an email already on file for this business (checked
- * against existing customers and against earlier rows in the same file),
- * inserts the rest, and schedules a review request for each new customer —
- * the same send_at = now + business.delay_hours calculation used when a
- * single customer is added via the Customers page form.
+ * CSV import: every row is a completed service. For each row we find or create
+ * the customer (by email), find or create the service, and record a visit.
+ * Rows with the same email + service + date as an existing visit (or an earlier
+ * row in the file) are skipped, so re-uploading a file is safe. Recent services
+ * (inside the review window) put the customer in the review queue; nothing is
+ * emailed unless `autoSend` is on. All database work is batched. Throws on
+ * unexpected database errors.
  */
 export async function bulkImportCustomers(
-  supabase: SupabaseClient<Database>,
-  businessId: string,
-  delayHours: number,
+  supabase: Db,
+  business: { id: string; delay_hours: number; review_request_window_days: number },
   rows: BulkImportRow[],
-  windowDays = 14
+  autoSend: boolean
 ): Promise<BulkImportSummary> {
   const results: BulkImportRowResult[] = [];
-  const seenEmails = new Set<string>();
+  const fail = (e: { message: string }) => new Error(e.message);
 
-  const { data: existing } = await supabase
-    .from('customers')
-    .select('email')
-    .eq('business_id', businessId);
+  // 1. Validate rows and drop duplicates inside the file.
+  const valid: Valid[] = [];
+  const fileKeys = new Set<string>();
+  rows.forEach((r, i) => {
+    const row = i + 1;
+    const name = r.name.trim();
+    const email = r.email.trim().toLowerCase();
+    const service = r.service.trim();
+    const rawDate = r.date.trim();
+    const error = (reason: string) => results.push({ row, status: 'error', name, email, reason });
 
-  const existingEmails = new Set((existing ?? []).map((c) => c.email.toLowerCase()));
+    if (!name) return error('Name is required.');
+    if (!isValidEmail(email)) return error('Invalid email address.');
+    if (!service) return error('Service is required.');
+    if (service.length > 120) return error('Service name is too long (max 120 characters).');
+    const date = parseServiceDate(/^\d{4}-\d{2}-\d{2}[T ]/.test(rawDate) ? rawDate.slice(0, 10) : rawDate);
+    if (!date) return error('Invalid date. Use YYYY-MM-DD or DD/MM/YYYY.');
+    if ((daysSinceService(date) ?? 0) < -1) return error('Date cannot be in the future.');
+    const amount = r.amountSpent?.trim() ? parseAmount(r.amountSpent) : null;
+    if (r.amountSpent?.trim() && amount === null) return error('Amount must be a number of 0 or more.');
 
-  const sendAt = new Date(Date.now() + delayHours * 60 * 60 * 1000).toISOString();
+    const key = `${email}|${service.toLowerCase()}|${date}`;
+    if (fileKeys.has(key)) return void results.push({ row, status: 'skipped_duplicate', name, email });
+    fileKeys.add(key);
+    valid.push({ row, name, email, service, date, phone: r.phone?.trim() || null, amount });
+  });
 
-  const { data: journey } = await supabase
-    .from('journeys')
-    .select('*')
-    .eq('business_id', businessId)
-    .eq('key', 'review_sequence')
-    .eq('is_active', true)
-    .maybeSingle();
-
-  for (let i = 0; i < rows.length; i++) {
-    const rowNumber = i + 1;
-    const name = rows[i].name.trim();
-    const email = rows[i].email.trim().toLowerCase();
-
-    if (!name) {
-      results.push({ row: rowNumber, status: 'error', name, email, reason: 'Name is required.' });
-      continue;
-    }
-
-    if (!isValidEmail(email)) {
-      results.push({ row: rowNumber, status: 'error', name, email, reason: 'Invalid email address.' });
-      continue;
-    }
-
-    if (existingEmails.has(email) || seenEmails.has(email)) {
-      results.push({ row: rowNumber, status: 'skipped_duplicate', name, email });
-      continue;
-    }
-
-    const rawDate = (rows[i].lastServiceDate ?? '').trim();
-    const serviceDate = rawDate ? parseServiceDate(rawDate) : null;
-    if (rawDate && !serviceDate) {
-      results.push({ row: rowNumber, status: 'error', name, email, reason: 'Invalid LastServiceDate (use YYYY-MM-DD or DD/MM/YYYY).' });
-      continue;
-    }
-
-    seenEmails.add(email);
-
-    const { data: customer, error: customerError } = await supabase
+  // 2. Existing customers (by email).
+  const known = new Map<string, Known>();
+  for (const batch of chunks([...new Set(valid.map((v) => v.email))], 100)) {
+    const { data, error } = await supabase
       .from('customers')
-      .insert({
-        business_id: businessId,
-        name,
-        email,
-        phone: rows[i].phone?.trim() || null,
-        last_service_date: serviceDate,
-      })
-      .select('id')
-      .single();
-
-    if (customerError || !customer) {
-      results.push({
-        row: rowNumber,
-        status: 'error',
-        name,
-        email,
-        reason: customerError?.message ?? 'Failed to create customer.',
-      });
-      continue;
-    }
-
-    results.push({ row: rowNumber, status: 'created', name, email });
+      .select('id, email, total_spend, visit_count, last_service_date, unsubscribed_at')
+      .eq('business_id', business.id)
+      .in('email', batch);
+    if (error) throw fail(error);
+    (data ?? []).forEach((c) => known.set(c.email.toLowerCase(), c));
   }
 
+  // 3. Services: reuse by name (case-insensitive), create the missing ones.
+  const serviceIds = new Map<string, string>();
+  const { data: svc, error: svcError } = await supabase.from('services').select('id, name').eq('business_id', business.id);
+  if (svcError) throw fail(svcError);
+  (svc ?? []).forEach((s) => serviceIds.set(s.name.toLowerCase(), s.id));
+  const missing = new Map<string, string>();
+  valid.forEach((v) => !serviceIds.has(v.service.toLowerCase()) && missing.set(v.service.toLowerCase(), v.service));
+  for (const batch of chunks([...missing.values()], 200)) {
+    const { data, error } = await supabase
+      .from('services')
+      .insert(batch.map((name) => ({ business_id: business.id, name })))
+      .select('id, name');
+    if (error) throw fail(error);
+    (data ?? []).forEach((s) => serviceIds.set(s.name.toLowerCase(), s.id));
+  }
+
+  // 4. Skip visits that already exist (same customer + service + date).
+  const visitKeys = new Set<string>();
+  for (const batch of chunks([...known.values()].map((c) => c.id), 100)) {
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabase
+        .from('visits')
+        .select('customer_id, service_id, visited_at')
+        .eq('business_id', business.id)
+        .in('customer_id', batch)
+        .range(from, from + 999);
+      if (error) throw fail(error);
+      (data ?? []).forEach((v) => visitKeys.add(`${v.customer_id}|${v.service_id}|${v.visited_at.slice(0, 10)}`));
+      if (!data || data.length < 1000) break;
+    }
+  }
+  const accepted: (Valid & { serviceId: string })[] = [];
+  for (const v of valid) {
+    const serviceId = serviceIds.get(v.service.toLowerCase()) as string;
+    const existing = known.get(v.email);
+    if (existing && visitKeys.has(`${existing.id}|${serviceId}|${v.date}`)) {
+      results.push({ row: v.row, status: 'skipped_duplicate', name: v.name, email: v.email });
+    } else {
+      accepted.push({ ...v, serviceId });
+    }
+  }
+
+  // 5. Per-customer totals for this import.
+  const agg = new Map<string, { name: string; phone: string | null; count: number; total: number; latest: string }>();
+  for (const v of accepted) {
+    const a = agg.get(v.email) ?? { name: v.name, phone: v.phone, count: 0, total: 0, latest: v.date };
+    a.count += 1;
+    a.total += v.amount ?? 0;
+    if (v.date > a.latest) a.latest = v.date;
+    agg.set(v.email, a);
+  }
+
+  // 6. Create new customers (with their totals), update existing ones.
+  const newEmails = [...agg.keys()].filter((e) => !known.has(e));
+  for (const batch of chunks(newEmails, 200)) {
+    const { data, error } = await supabase
+      .from('customers')
+      .insert(
+        batch.map((email) => {
+          const a = agg.get(email)!;
+          return {
+            business_id: business.id,
+            name: a.name,
+            email,
+            phone: a.phone,
+            last_service_date: a.latest,
+            total_spend: a.total,
+            visit_count: a.count,
+          };
+        })
+      )
+      .select('id, email');
+    if (error) throw fail(error);
+    (data ?? []).forEach((c) =>
+      known.set(c.email, { id: c.id, total_spend: 0, visit_count: 0, last_service_date: agg.get(c.email)!.latest, unsubscribed_at: null })
+    );
+  }
+  for (const batch of chunks([...agg.keys()].filter((e) => !newEmails.includes(e)), 20)) {
+    await Promise.all(
+      batch.map(async (email) => {
+        const c = known.get(email)!;
+        const a = agg.get(email)!;
+        const latest = !c.last_service_date || a.latest > c.last_service_date ? a.latest : c.last_service_date;
+        const { error } = await supabase
+          .from('customers')
+          .update({ total_spend: Number(c.total_spend) + a.total, visit_count: c.visit_count + a.count, last_service_date: latest })
+          .eq('id', c.id);
+        if (error) throw fail(error);
+      })
+    );
+  }
+
+  // 7. Record the visits (date + amount).
+  const visitIdByKey = new Map<string, string>();
+  for (const batch of chunks(accepted, 200)) {
+    const { data, error } = await supabase
+      .from('visits')
+      .insert(
+        batch.map((v) => ({
+          business_id: business.id,
+          customer_id: known.get(v.email)!.id,
+          service_id: v.serviceId,
+          visited_at: `${v.date}T12:00:00Z`,
+          price: v.amount,
+          notes: 'Imported from CSV',
+        }))
+      )
+      .select('id, customer_id, service_id, visited_at');
+    if (error) throw fail(error);
+    (data ?? []).forEach((v) => visitIdByKey.set(`${v.customer_id}|${v.service_id}|${v.visited_at.slice(0, 10)}`, v.id));
+  }
+  accepted.forEach((v) => results.push({ row: v.row, status: 'created', name: v.name, email: v.email }));
+
+  // 8. Review queue: one request per customer, for their most recent service, if it is inside the review window.
+  const latestVisit = new Map<string, (typeof accepted)[number]>();
+  accepted.forEach((v) => {
+    const cur = latestVisit.get(v.email);
+    if (!cur || v.date > cur.date) latestVisit.set(v.email, v);
+  });
+  const alreadyQueued = new Set<string>();
+  for (const batch of chunks([...latestVisit.keys()].map((e) => known.get(e)!.id), 100)) {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('customer_id')
+      .eq('business_id', business.id)
+      .eq('purpose', 'review_request')
+      .in('status', ['queued', 'pending'])
+      .in('customer_id', batch);
+    if (error) throw fail(error);
+    (data ?? []).forEach((m) => alreadyQueued.add(m.customer_id));
+  }
+  const toQueue = [...latestVisit.values()].filter((v) => {
+    const c = known.get(v.email)!;
+    const days = daysSinceService(v.date);
+    return !c.unsubscribed_at && !alreadyQueued.has(c.id) && days !== null && days <= business.review_request_window_days;
+  });
+
+  // Held = waits in Customers until the owner presses Send. Scheduled = emailed the
+  // day after the service between 9am and 12pm, followed by the day-3 / day-7 reminders.
+  let journeyId: string | null = null;
+  if (autoSend) {
+    const { data: journey } = await supabase
+      .from('journeys')
+      .select('id')
+      .eq('business_id', business.id)
+      .eq('key', 'review_sequence')
+      .eq('is_active', true)
+      .maybeSingle();
+    journeyId = journey?.id ?? null;
+  }
+  for (const batch of chunks(toQueue, 200)) {
+    const customerIds = batch.map((v) => known.get(v.email)!.id);
+    const enrollmentByCustomer = new Map<string, string>();
+    if (journeyId) {
+      const { data, error } = await supabase
+        .from('journey_enrollments')
+        .insert(customerIds.map((customer_id) => ({ journey_id: journeyId!, business_id: business.id, customer_id, current_step: 0 })))
+        .select('id, customer_id');
+      if (error) throw fail(error);
+      (data ?? []).forEach((e) => enrollmentByCustomer.set(e.customer_id, e.id));
+    }
+    const { error } = await supabase.from('messages').insert(
+      batch.map((v) => {
+        const customerId = known.get(v.email)!.id;
+        return {
+          business_id: business.id,
+          customer_id: customerId,
+          purpose: 'review_request',
+          channel: 'email' as const,
+          status: autoSend ? ('pending' as const) : ('queued' as const),
+          send_at: (autoSend ? reviewSendTime(v.date) : new Date()).toISOString(),
+          journey_enrollment_id: enrollmentByCustomer.get(customerId) ?? null,
+          visit_id: visitIdByKey.get(`${customerId}|${v.serviceId}|${v.date}`) ?? null,
+        };
+      })
+    );
+    if (error) throw fail(error);
+  }
+
+  results.sort((x, y) => x.row - y.row);
   return {
     totalRows: rows.length,
-    created: results.filter((r) => r.status === 'created').length,
+    created: accepted.length,
     duplicates: results.filter((r) => r.status === 'skipped_duplicate').length,
     errors: results.filter((r) => r.status === 'error').length,
+    newCustomers: newEmails.length,
+    queued: toQueue.length,
+    notQueued: latestVisit.size - toQueue.length,
+    autoSend,
     results,
   };
 }
@@ -180,37 +358,44 @@ export function parseCsv(content: string): string[][] {
 }
 
 /**
- * Maps parsed CSV rows to { name, email } using a case-insensitive header
- * lookup. Accepts common header variants (e.g. "Full Name", "E-mail").
+ * Maps parsed CSV rows to import rows using a case-insensitive header lookup.
+ * Required columns: name, email, service, date. Common export variants
+ * (ServiceM8, Jobber, Tradify, Excel) are accepted as aliases.
  */
-export function mapCsvRowsToCustomers(rows: string[][]): {
-  rows: BulkImportRow[];
-  error?: string;
-} {
-  if (rows.length === 0) {
-    return { rows: [], error: 'The file is empty.' };
-  }
+export function mapCsvRowsToCustomers(rows: string[][]): { rows: BulkImportRow[]; error?: string } {
+  if (rows.length === 0) return { rows: [], error: 'The file is empty.' };
 
-  const header = rows[0].map((h) => h.trim().toLowerCase());
-  const phoneIndex = rows[0].map((h) => h.trim().toLowerCase()).findIndex((h) => ['phone', 'phone number', 'mobile'].includes(h));
-  const dateIndex = rows[0].map((h) => h.trim().toLowerCase().replace(/[\s_]/g, '')).findIndex((h) => h === 'lastservicedate');
-  const nameIndex = header.findIndex((h) => ['name', 'full name', 'customer name'].includes(h));
-  const emailIndex = header.findIndex((h) => ['email', 'e-mail', 'email address'].includes(h));
+  const header = rows[0].map((h) => h.trim().toLowerCase().replace(/[\s_-]/g, ''));
+  const find = (aliases: string[]) => header.findIndex((h) => aliases.includes(h));
+  const nameIndex = find(['name', 'fullname', 'customername', 'customer', 'client', 'clientname']);
+  const emailIndex = find(['email', 'emailaddress', 'e-mail']);
+  const serviceIndex = find(['service', 'servicetype', 'job', 'jobtype', 'jobname', 'worktype']);
+  const dateIndex = find(['date', 'servicedate', 'lastservicedate', 'dateofservice', 'jobdate', 'completeddate']);
+  const phoneIndex = find(['phone', 'phonenumber', 'mobile']);
+  const amountIndex = find(['amountspent', 'amount', 'spend', 'price', 'total']);
 
-  if (nameIndex === -1 || emailIndex === -1) {
+  const missing = [
+    nameIndex === -1 && 'name',
+    emailIndex === -1 && 'email',
+    serviceIndex === -1 && 'service',
+    dateIndex === -1 && 'date',
+  ].filter(Boolean);
+  if (missing.length > 0) {
     return {
       rows: [],
-      error: 'Could not find "name" and "email" columns. The first row must be a header row.',
+      error: `Missing required column${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}. The first row must be a header row: name,email,service,date`,
     };
   }
 
-  const dataRows = rows.slice(1);
-  const mapped = dataRows.map((r) => ({
-    name: r[nameIndex] ?? '',
-    email: r[emailIndex] ?? '',
-    phone: phoneIndex >= 0 ? r[phoneIndex] ?? '' : '',
-    lastServiceDate: dateIndex >= 0 ? r[dateIndex] ?? '' : '',
-  }));
-
-  return { rows: mapped };
+  const cell = (r: string[], i: number) => (i >= 0 ? r[i] ?? '' : '');
+  return {
+    rows: rows.slice(1).map((r) => ({
+      name: cell(r, nameIndex),
+      email: cell(r, emailIndex),
+      service: cell(r, serviceIndex),
+      date: cell(r, dateIndex),
+      phone: cell(r, phoneIndex),
+      amountSpent: cell(r, amountIndex),
+    })),
+  };
 }

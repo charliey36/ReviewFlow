@@ -37,7 +37,7 @@ export function SettingsForm({ business }: { business: Business }) {
 
       <SectionCard
         title="Review requests"
-        description="Where customers land when they click the review button, and when the request goes out."
+        description="Where customers land when they click the review button. Requests are emailed the day after a service, between 9am and 12pm."
       >
         <div className="max-w-lg space-y-6">
           <div>
@@ -57,34 +57,12 @@ export function SettingsForm({ business }: { business: Business }) {
               review request emails just won&apos;t include a review link until it&apos;s set.
             </p>
           </div>
-
-          <div>
-            <label htmlFor="delay_hours" className="label">
-              Send delay
-            </label>
-            <div className="relative mt-1.5 w-44">
-              <input
-                id="delay_hours"
-                name="delay_hours"
-                type="number"
-                min={0.1}
-                step={0.1}
-                required
-                defaultValue={business.delay_hours}
-                className="input pr-14 tabular-nums"
-              />
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">
-                hours
-              </span>
-            </div>
-            <p className="field-hint">How long after a customer is added before the review request email is sent.</p>
-          </div>
         </div>
       </SectionCard>
 
       <SectionCard
         title="Service timing"
-        description="Review and rebooking messages are based on each customer's last service date."
+        description="Review requests are emailed the day after a service, and all customer emails go out between 9am and 12pm UK time."
       >
         <div className="grid max-w-lg gap-6 sm:grid-cols-2">
           <div>
@@ -97,8 +75,16 @@ export function SettingsForm({ business }: { business: Business }) {
             <label htmlFor="rebooking_reminder_interval_days" className="label">Rebooking reminder after (days)</label>
             <input id="rebooking_reminder_interval_days" name="rebooking_reminder_interval_days" type="number" min={1} required
               defaultValue={business.rebooking_reminder_interval_days ?? 90} className="input mt-1.5 tabular-nums" />
-            <p className="field-hint">Customers get a rebooking reminder this many days after their service.</p>
+            <p className="field-hint">Days after a customer's last service before we email them to rebook.</p>
           </div>
+          <label className="flex items-start gap-3 text-sm text-ink-2 sm:col-span-2">
+            <input type="checkbox" name="rebooking_reminders_enabled" defaultChecked={business.rebooking_reminders_enabled ?? true}
+              className="mt-1 h-4 w-4 rounded border-line-strong" />
+            <span>
+              <span className="font-medium text-ink">Send rebooking reminders</span>
+              <span className="block text-[13px] text-ink-3">Untick if you do not want ReviewFlow to email customers asking them to book again.</span>
+            </span>
+          </label>
         </div>
       </SectionCard>
 

@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { requireBusiness } from '@/lib/business';
+import { sendQueuedReview } from '@/lib/review-queue';
+import { exitJourneyEnrollment } from '@/lib/journeys';
 import { parseServiceDate } from '@/lib/eligibility';
 
 export type AddCustomerResult = { error?: string; success?: boolean };
@@ -44,4 +46,61 @@ export async function addCustomer(
   revalidatePath('/customers');
   revalidatePath('/dashboard');
   return { success: true };
+}
+
+const MAX_PER_CLICK = 25; // keeps one click well inside the request time limit
+
+export type ReviewActionResult = { message: string };
+
+/** Send one scheduled/held review request right now, or (no id) the next batch of held ones. */
+export async function sendReviewNow(messageId?: string): Promise<ReviewActionResult> {
+  const business = await requireBusiness();
+  const supabase = createClient();
+
+  let ids: string[];
+  if (messageId) {
+    ids = [messageId];
+  } else {
+    const { data } = await supabase
+      .from('messages')
+      .select('id')
+      .eq('business_id', business.id)
+      .eq('purpose', 'review_request')
+      .eq('status', 'queued')
+      .order('created_at')
+      .limit(MAX_PER_CLICK);
+    ids = (data ?? []).map((m) => m.id);
+  }
+
+  let sent = 0;
+  const errors: string[] = [];
+  for (const id of ids) {
+    const res = await sendQueuedReview(supabase, business.id, id);
+    if (res.ok) sent += 1;
+    else errors.push(res.error ?? 'error');
+  }
+  revalidatePath('/customers');
+  revalidatePath('/dashboard');
+  return { message: `Sent ${sent}.${errors.length ? ` ${errors.length} failed: ${errors[0]}` : ''}` };
+}
+
+/** Cancel a scheduled/held review request (and its follow-up reminders). */
+export async function cancelReview(messageId: string): Promise<ReviewActionResult> {
+  const business = await requireBusiness();
+  const supabase = createClient();
+  const { data: m } = await supabase
+    .from('messages')
+    .select('journey_enrollment_id')
+    .eq('id', messageId)
+    .eq('business_id', business.id)
+    .maybeSingle();
+  await supabase
+    .from('messages')
+    .update({ status: 'cancelled' })
+    .eq('id', messageId)
+    .eq('business_id', business.id)
+    .in('status', ['queued', 'pending']);
+  if (m?.journey_enrollment_id) await exitJourneyEnrollment(supabase, m.journey_enrollment_id);
+  revalidatePath('/customers');
+  return { message: 'Cancelled.' };
 }

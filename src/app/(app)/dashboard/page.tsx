@@ -137,9 +137,20 @@ export default async function DashboardPage() {
   const customerTotal = customersCount.count ?? 0;
   // Brand-new business: go straight to the one-form setup.
   if (!hasReviewUrl && customerTotal === 0) redirect('/onboarding');
-  const sent = emailsSentCount.count ?? 0;
+  // Requests sent from the Review queue / import pipeline live in `messages`.
+  const [queueSent, queuePending] = await Promise.all(
+    (['sent', 'pending'] as const).map((status) =>
+      supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('business_id', business.id)
+        .eq('purpose', 'review_request')
+        .eq('status', status)
+    )
+  );
+  const sent = (emailsSentCount.count ?? 0) + (queueSent.count ?? 0);
   const clicks = clicksCount.count ?? 0;
-  const pending = pendingCount.count ?? 0;
+  const pending = (pendingCount.count ?? 0) + (queuePending.count ?? 0);
   const failed = failedCount.count ?? 0;
   const newFeedback = newFeedbackCount.count ?? 0;
 

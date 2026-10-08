@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import { notifyOwner } from '@/lib/notifications';
 import { createClient } from '@/lib/supabase/server';
@@ -14,7 +15,7 @@ import type { Business } from '@/lib/database.types';
  * billing/ownership record, but a business could in principle have more
  * than one member in the future without any RLS rewrite.
  */
-export async function requireBusiness(): Promise<Business> {
+async function loadBusiness(): Promise<Business> {
   const supabase = createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
 
@@ -80,6 +81,12 @@ export async function requireBusiness(): Promise<Business> {
 
   return created;
 }
+
+/**
+ * Memoised per request: the layout and the page both call this, and without
+ * the cache each call repeats three database round trips.
+ */
+export const requireBusiness = cache(loadBusiness);
 
 /**
  * True if the given email is in the ADMIN_EMAIL list. Used to show the "all

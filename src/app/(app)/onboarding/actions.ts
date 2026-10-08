@@ -43,13 +43,7 @@ export async function completeOnboarding(_prev: OnboardingResult, fd: FormData):
     .single();
   if (custError || !customer) return { error: `Could not add customer: ${custError?.message ?? 'unknown error'}` };
 
-  const { error: reqError } = await supabase.from('review_requests').insert({
-    business_id: business.id,
-    customer_id: customer.id,
-    send_at: new Date().toISOString(), // first request goes out on the next cron run
-  });
-  if (reqError) return { error: `Could not schedule the request: ${reqError.message}` };
-
+  // First request goes out straight away (not next-day) so setup ends with a real send.
   const { data: journey } = await supabase
     .from('journeys')
     .select('*')
@@ -57,7 +51,7 @@ export async function completeOnboarding(_prev: OnboardingResult, fd: FormData):
     .eq('key', 'review_sequence')
     .eq('is_active', true)
     .maybeSingle();
-  if (journey) await enrollCustomerInJourney(supabase, journey, customer.id);
+  if (journey) await enrollCustomerInJourney(supabase, journey, customer.id, new Date());
 
   redirect('/dashboard');
 }

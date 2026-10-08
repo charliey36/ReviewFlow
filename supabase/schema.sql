@@ -650,3 +650,14 @@ create table if not exists public.integration_events (
 create index if not exists integration_events_business_created_idx
   on public.integration_events (business_id, created_at desc);
 alter table public.integration_events enable row level security; -- server-only (service role)
+
+-- Review queue (see migrations/0011)
+alter table public.messages drop constraint if exists messages_status_check;
+alter table public.messages add constraint messages_status_check
+  check (status in ('queued', 'pending', 'sent', 'failed', 'cancelled'));
+
+-- The service visit a queued review request is about (shown in the queue).
+alter table public.messages add column if not exists visit_id uuid references public.visits (id) on delete set null;
+
+-- Rebooking toggle (see migrations/0012)
+alter table public.businesses add column if not exists rebooking_reminders_enabled boolean not null default true;
