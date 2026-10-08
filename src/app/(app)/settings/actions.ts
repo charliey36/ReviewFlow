@@ -18,6 +18,12 @@ export async function saveSettings(
   const delayHoursRaw = String(formData.get('delay_hours') ?? '').trim();
   const delayHours = Number(delayHoursRaw);
 
+  const windowDays = Math.round(Number(formData.get('review_request_window_days')));
+  const rebookDays = Math.round(Number(formData.get('rebooking_reminder_interval_days')));
+  if (!Number.isFinite(windowDays) || windowDays < 1 || !Number.isFinite(rebookDays) || rebookDays < 1) {
+    return { error: 'Review window and rebooking interval must be at least 1 day.' };
+  }
+
   if (!name) {
     return { error: 'Business name is required.' };
   }
@@ -41,6 +47,8 @@ export async function saveSettings(
       name,
       google_review_url: googleReviewUrl,
       delay_hours: delayHours,
+      review_request_window_days: windowDays,
+      rebooking_reminder_interval_days: rebookDays,
     })
     .eq('id', business.id);
 

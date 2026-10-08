@@ -39,8 +39,10 @@ export async function middleware(request: NextRequest) {
   const { data } = await supabase.auth.getUser();
   const user = data.user;
 
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
+  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password';
   const isPublicApiRoute = pathname.startsWith('/api/track') ||
+    pathname.startsWith('/api/integrations') ||
+    pathname.startsWith('/api/sync-demo-company') ||
     pathname.startsWith('/api/unsubscribe') ||
     pathname.startsWith('/api/send-review-requests') ||
     pathname.startsWith('/api/send-messages') ||

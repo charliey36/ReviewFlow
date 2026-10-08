@@ -1,0 +1,47 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "ReviewFlow Integrations API", "version": "1.0.0" },
+  "servers": [{ "url": "http://localhost:3000" }],
+  "components": {
+    "securitySchemes": { "ApiKey": { "type": "apiKey", "in": "header", "name": "x-api-key" } }
+  },
+  "security": [{ "ApiKey": [] }],
+  "paths": {
+    "/api/integrations/service-completed": {
+      "post": {
+        "summary": "Record a completed service (creates/updates the customer)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["customerName", "email", "serviceDate"],
+                "properties": {
+                  "customerName": { "type": "string", "maxLength": 200, "example": "John Smith" },
+                  "email": { "type": "string", "format": "email", "example": "john@email.com" },
+                  "phone": { "type": "string", "maxLength": 40, "example": "07123456789" },
+                  "amountSpent": { "type": "number", "minimum": 0, "maximum": 1000000, "example": 350.0 },
+                  "serviceDate": { "type": "string", "format": "date", "example": "2026-10-08", "description": "YYYY-MM-DD, not in the future" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recorded. duplicate=true if the same customer/date/amount was already recorded (retry-safe).",
+            "content": { "application/json": { "schema": { "type": "object", "properties": {
+              "success": { "type": "boolean", "example": true },
+              "customerId": { "type": "string", "format": "uuid" },
+              "visitId": { "type": "string", "format": "uuid" },
+              "customerCreated": { "type": "boolean" },
+              "duplicate": { "type": "boolean" } } } } }
+          },
+          "400": { "description": "Validation failed ({ success:false, error, errors[] })" },
+          "401": { "description": "Invalid or missing x-api-key" }
+        }
+      }
+    }
+  }
+}

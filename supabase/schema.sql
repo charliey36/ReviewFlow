@@ -612,3 +612,26 @@ alter table public.businesses
   add column if not exists welcome_email_sent_at timestamptz,
   add column if not exists campaign_email_sent_at timestamptz,
   add column if not exists trial_ending_email_sent_at timestamptz;
+
+-- Service dates + review settings (see migrations/0007)
+alter table public.customers add column if not exists last_service_date date;
+alter table public.businesses
+  add column if not exists review_request_window_days integer not null default 14,
+  add column if not exists rebooking_reminder_interval_days integer not null default 90;
+
+-- Integrations (see migrations/0008)
+alter table public.customers
+  add column if not exists total_spend numeric not null default 0,
+  add column if not exists visit_count integer not null default 0;
+
+-- One API key per business. Only a SHA-256 hash is stored; the plaintext key
+-- is shown once at generation. RLS on with no policies = server (service role) only.
+create table if not exists public.api_keys (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null unique references public.businesses (id) on delete cascade,
+  key_hash text not null unique,
+  key_prefix text not null,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table public.api_keys enable row level security;

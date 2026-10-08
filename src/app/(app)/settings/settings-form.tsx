@@ -82,6 +82,26 @@ export function SettingsForm({ business }: { business: Business }) {
         </div>
       </SectionCard>
 
+      <SectionCard
+        title="Service timing"
+        description="Review and rebooking messages are based on each customer's last service date."
+      >
+        <div className="grid max-w-lg gap-6 sm:grid-cols-2">
+          <div>
+            <label htmlFor="review_request_window_days" className="label">Review request window (days)</label>
+            <input id="review_request_window_days" name="review_request_window_days" type="number" min={1} required
+              defaultValue={business.review_request_window_days ?? 14} className="input mt-1.5 tabular-nums" />
+            <p className="field-hint">Only customers serviced within this many days get review requests.</p>
+          </div>
+          <div>
+            <label htmlFor="rebooking_reminder_interval_days" className="label">Rebooking reminder after (days)</label>
+            <input id="rebooking_reminder_interval_days" name="rebooking_reminder_interval_days" type="number" min={1} required
+              defaultValue={business.rebooking_reminder_interval_days ?? 90} className="input mt-1.5 tabular-nums" />
+            <p className="field-hint">Customers get a rebooking reminder this many days after their service.</p>
+          </div>
+        </div>
+      </SectionCard>
+
       <div className="flex flex-wrap items-center gap-4">
         <SubmitButton pendingText="Saving…" icon={<Icon name="check" className="h-4 w-4" strokeWidth={2.2} />}>
           Save changes

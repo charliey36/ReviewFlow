@@ -1,4 +1,5 @@
 import { notifyOwner } from '@/lib/notifications';
+import { isRebookingEligible } from '@/lib/eligibility';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { enrollCustomerInJourney } from '@/lib/journeys';
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
 
   const supabase = createAdminClient();
 
-  const { data: businesses, error: businessesError } = await supabase.from('businesses').select('id');
+  const { data: businesses, error: businessesError } = await supabase.from('businesses').select('id, rebooking_reminder_interval_days');
   if (businessesError) {
     return NextResponse.json({ error: businessesError.message }, { status: 500 });
   }
@@ -72,6 +73,23 @@ export async function GET(request: NextRequest) {
           await enrollCustomerInJourney(supabase, birthdayJourney, customer.id);
           birthdayEnrolled += 1;
         }
+      }
+
+      // Service-date rule: reminder once `rebooking_reminder_interval_days` have passed,
+      // at most once per service (skip if already enrolled since that service date).
+      if (rebookingJourney && customer.last_service_date &&
+          isRebookingEligible(customer.last_service_date, business.rebooking_reminder_interval_days ?? 90)) {
+        const { count } = await supabase
+          .from('journey_enrollments')
+          .select('id', { count: 'exact', head: true })
+          .eq('journey_id', rebookingJourney.id)
+          .eq('customer_id', customer.id)
+          .gte('enrolled_at', `${customer.last_service_date}T00:00:00Z`);
+        if (!count) {
+          await enrollCustomerInJourney(supabase, rebookingJourney, customer.id);
+          rebookingEnrolled += 1;
+        }
+        continue;
       }
 
       if (!rebookingJourney && !winBackJourney) continue;

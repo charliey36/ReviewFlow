@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { requireBusiness } from '@/lib/business';
+import { scheduleReviewRequest, todayIso } from '@/lib/eligibility';
 
 export type LogVisitResult = { error?: string; success?: boolean };
 
@@ -79,4 +80,22 @@ export async function removeCustomerTag(tagId: string, customerId: string) {
   await supabase.from('customer_tags').delete().eq('id', tagId).eq('business_id', business.id);
 
   revalidatePath(`/customers/${customerId}`);
+}
+
+/** Marks a service as received today and schedules the review request. */
+export async function completeService(customerId: string): Promise<{ error?: string }> {
+  const business = await requireBusiness();
+  const supabase = createClient();
+
+  const { error } = await supabase
+    .from('customers')
+    .update({ last_service_date: todayIso() })
+    .eq('id', customerId)
+    .eq('business_id', business.id);
+  if (error) return { error: error.message };
+
+  await scheduleReviewRequest(supabase, business.id, business.delay_hours, customerId);
+  revalidatePath(`/customers/${customerId}`);
+  revalidatePath('/customers');
+  return {};
 }

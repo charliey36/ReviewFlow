@@ -13,7 +13,7 @@ export function AddCustomerForm({ autoFocus = false }: { autoFocus?: boolean }) 
     addCustomer,
     {}
   );
-  useActionToast(state, { title: 'Customer added', description: 'A review request has been scheduled.' });
+  useActionToast(state, { title: 'Customer added', description: 'No email is sent until you press Complete Service.' });
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export function AddCustomerForm({ autoFocus = false }: { autoFocus?: boolean }) 
     <form
       ref={formRef}
       action={formAction}
-      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end"
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] lg:items-end"
     >
       <div>
         <label htmlFor="name" className="label">
@@ -71,6 +71,13 @@ export function AddCustomerForm({ autoFocus = false }: { autoFocus?: boolean }) 
           className="input mt-1.5"
           placeholder="+1 555 123 4567"
         />
+      </div>
+
+      <div>
+        <label htmlFor="last_service_date" className="label">
+          Last service <span className="font-normal text-ink-4">(optional)</span>
+        </label>
+        <input id="last_service_date" name="last_service_date" type="date" className="input mt-1.5" />
       </div>
 
       <SubmitButton

@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Icon } from '@/components/ui/icons';
 import { LogVisitForm } from './log-visit-form';
+import { CompleteServiceButton } from './complete-service-button';
 import { TagEditor } from './tag-editor';
 
 export const metadata: Metadata = { title: 'Customer' };
@@ -61,6 +62,7 @@ export default async function CustomerDetailPage({ params }: { params: { custome
         title={customer.name}
         leading={<Avatar name={customer.name} size="xl" />}
         adornment={statusBadge}
+        actions={<CompleteServiceButton customerId={customer.id} lastServiceDate={customer.last_service_date} />}
         description={
           <span className="flex flex-wrap items-center gap-x-5 gap-y-1">
             <span className="inline-flex items-center gap-1.5">

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -110,6 +111,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
           </button>
         </div>
       </div>
+
+      {mode === 'login' && (
+        <p className="-mt-2 text-right text-sm">
+          <Link href="/forgot-password" className="font-medium text-brand-700 hover:underline dark:text-brand-400">
+            Forgot password?
+          </Link>
+        </p>
+      )}
 
       {error && <Notice variant="error">{error}</Notice>}
       {message && <Notice variant="success">{message}</Notice>}

@@ -1,3 +1,4 @@
+import { parseServiceDate } from '@/lib/eligibility';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
 import { enrollCustomerInJourney } from '@/lib/journeys';
@@ -8,7 +9,7 @@ export function isValidEmail(email: string): boolean {
   return EMAIL_PATTERN.test(email);
 }
 
-export type BulkImportRow = { name: string; email: string };
+export type BulkImportRow = { name: string; email: string; phone?: string; lastServiceDate?: string };
 
 export type BulkImportRowResult =
   | { row: number; status: 'created'; name: string; email: string }
@@ -35,7 +36,8 @@ export async function bulkImportCustomers(
   supabase: SupabaseClient<Database>,
   businessId: string,
   delayHours: number,
-  rows: BulkImportRow[]
+  rows: BulkImportRow[],
+  windowDays = 14
 ): Promise<BulkImportSummary> {
   const results: BulkImportRowResult[] = [];
   const seenEmails = new Set<string>();
@@ -77,11 +79,24 @@ export async function bulkImportCustomers(
       continue;
     }
 
+    const rawDate = (rows[i].lastServiceDate ?? '').trim();
+    const serviceDate = rawDate ? parseServiceDate(rawDate) : null;
+    if (rawDate && !serviceDate) {
+      results.push({ row: rowNumber, status: 'error', name, email, reason: 'Invalid LastServiceDate (use YYYY-MM-DD or DD/MM/YYYY).' });
+      continue;
+    }
+
     seenEmails.add(email);
 
     const { data: customer, error: customerError } = await supabase
       .from('customers')
-      .insert({ business_id: businessId, name, email })
+      .insert({
+        business_id: businessId,
+        name,
+        email,
+        phone: rows[i].phone?.trim() || null,
+        last_service_date: serviceDate,
+      })
       .select('id')
       .single();
 
@@ -94,27 +109,6 @@ export async function bulkImportCustomers(
         reason: customerError?.message ?? 'Failed to create customer.',
       });
       continue;
-    }
-
-    const { error: requestError } = await supabase.from('review_requests').insert({
-      business_id: businessId,
-      customer_id: customer.id,
-      send_at: sendAt,
-    });
-
-    if (requestError) {
-      results.push({
-        row: rowNumber,
-        status: 'error',
-        name,
-        email,
-        reason: `Customer created, but failed to schedule review request: ${requestError.message}`,
-      });
-      continue;
-    }
-
-    if (journey) {
-      await enrollCustomerInJourney(supabase, journey, customer.id);
     }
 
     results.push({ row: rowNumber, status: 'created', name, email });
@@ -198,6 +192,8 @@ export function mapCsvRowsToCustomers(rows: string[][]): {
   }
 
   const header = rows[0].map((h) => h.trim().toLowerCase());
+  const phoneIndex = rows[0].map((h) => h.trim().toLowerCase()).findIndex((h) => ['phone', 'phone number', 'mobile'].includes(h));
+  const dateIndex = rows[0].map((h) => h.trim().toLowerCase().replace(/[\s_]/g, '')).findIndex((h) => h === 'lastservicedate');
   const nameIndex = header.findIndex((h) => ['name', 'full name', 'customer name'].includes(h));
   const emailIndex = header.findIndex((h) => ['email', 'e-mail', 'email address'].includes(h));
 
@@ -212,6 +208,8 @@ export function mapCsvRowsToCustomers(rows: string[][]): {
   const mapped = dataRows.map((r) => ({
     name: r[nameIndex] ?? '',
     email: r[emailIndex] ?? '',
+    phone: phoneIndex >= 0 ? r[phoneIndex] ?? '' : '',
+    lastServiceDate: dateIndex >= 0 ? r[dateIndex] ?? '' : '',
   }));
 
   return { rows: mapped };

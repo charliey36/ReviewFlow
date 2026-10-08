@@ -48,7 +48,7 @@ export async function importCustomers(
     return { error: `This file has ${rows.length} rows; the limit is ${MAX_ROWS} per import.` };
   }
 
-  const summary = await bulkImportCustomers(supabase, business.id, business.delay_hours, rows);
+  const summary = await bulkImportCustomers(supabase, business.id, business.delay_hours, rows, business.review_request_window_days ?? 14);
 
   revalidatePath('/customers');
   revalidatePath('/dashboard');

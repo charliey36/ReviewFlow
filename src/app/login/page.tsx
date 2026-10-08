@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AuthForm } from '@/components/auth-form';
+import { Notice } from '@/components/ui/notice';
 import { AuthShell } from '@/components/auth-shell';
 
 export const metadata: Metadata = { title: 'Log in' };
 
-export default function LoginPage() {
+export default function LoginPage({ searchParams }: { searchParams: { reset?: string } }) {
   return (
     <AuthShell
       title="Welcome back"
@@ -19,6 +20,7 @@ export default function LoginPage() {
         </>
       }
     >
+      {searchParams.reset && <div className="mb-5"><Notice variant="success">Password updated. Log in with your new password.</Notice></div>}
       <AuthForm mode="login" />
     </AuthShell>
   );

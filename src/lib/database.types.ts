@@ -15,6 +15,8 @@ export type Database = {
           current_period_end: string | null;
           stripe_customer_id: string | null;
           stripe_subscription_id: string | null;
+          review_request_window_days: number;
+          rebooking_reminder_interval_days: number;
           onboarding_completed_at: string | null;
           welcome_email_sent_at: string | null;
           campaign_email_sent_at: string | null;
@@ -42,11 +44,25 @@ export type Database = {
           current_period_end?: string | null;
           stripe_customer_id?: string | null;
           stripe_subscription_id?: string | null;
+          review_request_window_days?: number;
+          rebooking_reminder_interval_days?: number;
           onboarding_completed_at?: string | null;
           welcome_email_sent_at?: string | null;
           campaign_email_sent_at?: string | null;
           trial_ending_email_sent_at?: string | null;
         };
+        Relationships: [];
+      };
+      api_keys: {
+        Row: { id: string; business_id: string; key_hash: string; key_prefix: string; is_active: boolean; created_at: string };
+        Insert: { id?: string; business_id: string; key_hash: string; key_prefix: string; is_active?: boolean };
+        Update: { key_hash?: string; key_prefix?: string; is_active?: boolean; created_at?: string };
+        Relationships: [];
+      };
+      demo_company_records: {
+        Row: { id: string; business_id: string; customer_name: string; email: string; phone: string | null; amount_spent: number; service_date: string; created_at: string; synced_at: string | null };
+        Insert: { id?: string; business_id?: string; customer_name: string; email: string; phone?: string | null; amount_spent?: number; service_date?: string; synced_at?: string | null };
+        Update: { synced_at?: string | null };
         Relationships: [];
       };
       business_members: {
@@ -76,6 +92,9 @@ export type Database = {
           email: string;
           phone: string | null;
           date_of_birth: string | null;
+          last_service_date: string | null;
+          total_spend: number;
+          visit_count: number;
           source: string | null;
           unsubscribed_at: string | null;
           unsubscribed_sms_at: string | null;
@@ -88,6 +107,9 @@ export type Database = {
           email: string;
           phone?: string | null;
           date_of_birth?: string | null;
+          last_service_date?: string | null;
+          total_spend?: number;
+          visit_count?: number;
           source?: string | null;
           unsubscribed_at?: string | null;
           unsubscribed_sms_at?: string | null;
@@ -97,6 +119,9 @@ export type Database = {
           email?: string;
           phone?: string | null;
           date_of_birth?: string | null;
+          last_service_date?: string | null;
+          total_spend?: number;
+          visit_count?: number;
           source?: string | null;
           unsubscribed_at?: string | null;
           unsubscribed_sms_at?: string | null;
