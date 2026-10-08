@@ -1,0 +1,37 @@
+'use client';
+
+import { useFormState } from 'react-dom';
+import { Notice } from '@/components/ui/notice';
+import { SubmitButton } from '@/components/ui/submit-button';
+import { completeOnboarding, type OnboardingResult } from './actions';
+
+export function OnboardingForm({ defaultName, defaultUrl }: { defaultName: string; defaultUrl: string }) {
+  const [state, formAction] = useFormState<OnboardingResult, FormData>(completeOnboarding, {});
+  return (
+    <form action={formAction} className="card mt-6 space-y-5 p-6">
+      <div>
+        <label htmlFor="name" className="label">1. Your business name</label>
+        <input id="name" name="name" required defaultValue={defaultName} className="input mt-1.5" placeholder="Smith & Sons Garage" />
+      </div>
+      <div>
+        <label htmlFor="google_review_url" className="label">2. Your Google review link</label>
+        <input id="google_review_url" name="google_review_url" type="url" required defaultValue={defaultUrl} className="input mt-1.5" placeholder="https://g.page/r/..." />
+        <p className="mt-1.5 text-xs text-ink-4">
+          Find it in Google Business Profile → “Get more reviews” → copy link.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="customer_name" className="label">3. Customer name</label>
+          <input id="customer_name" name="customer_name" required className="input mt-1.5" placeholder="Jane Doe" />
+        </div>
+        <div>
+          <label htmlFor="customer_email" className="label">Customer email</label>
+          <input id="customer_email" name="customer_email" type="email" required className="input mt-1.5" placeholder="jane@example.com" />
+        </div>
+      </div>
+      {state.error && <Notice variant="error">{state.error}</Notice>}
+      <SubmitButton pendingText="Sending…">Send my first review request</SubmitButton>
+    </form>
+  );
+}

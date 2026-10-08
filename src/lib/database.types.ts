@@ -10,6 +10,11 @@ export type Database = {
           delay_hours: number;
           brand_logo_url: string | null;
           brand_primary_color: string | null;
+          subscription_status: 'trialing' | 'active' | 'past_due' | 'canceled';
+          trial_ends_at: string;
+          current_period_end: string | null;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -28,6 +33,11 @@ export type Database = {
           delay_hours?: number;
           brand_logo_url?: string | null;
           brand_primary_color?: string | null;
+          subscription_status?: 'trialing' | 'active' | 'past_due' | 'canceled';
+          trial_ends_at?: string;
+          current_period_end?: string | null;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
         };
         Relationships: [];
       };

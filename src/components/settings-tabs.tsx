@@ -7,6 +7,7 @@ const tabs = [
   { href: '/settings', label: 'General' },
   { href: '/settings/services', label: 'Services' },
   { href: '/settings/loyalty', label: 'Loyalty program' },
+  { href: '/settings/billing', label: 'Billing' },
 ];
 
 /** Section navigation shared by the three Settings pages. */

@@ -1,0 +1,63 @@
+'use server';
+
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import { requireBusiness } from '@/lib/business';
+import { enrollCustomerInJourney } from '@/lib/journeys';
+
+export type OnboardingResult = { error?: string };
+
+/**
+ * One-step setup: save business name + Google review link, add the first
+ * customer and schedule their review request to send immediately.
+ */
+export async function completeOnboarding(_prev: OnboardingResult, fd: FormData): Promise<OnboardingResult> {
+  const business = await requireBusiness();
+  const supabase = createClient();
+
+  const name = String(fd.get('name') ?? '').trim();
+  const url = String(fd.get('google_review_url') ?? '').trim();
+  const customerName = String(fd.get('customer_name') ?? '').trim();
+  const customerEmail = String(fd.get('customer_email') ?? '').trim().toLowerCase();
+
+  if (!name) return { error: 'Enter your business name.' };
+  try {
+    const u = new URL(url);
+    if (!/^https?:$/.test(u.protocol)) throw new Error();
+  } catch {
+    return { error: 'Paste your full Google review link (starting with https://).' };
+  }
+  if (!customerName) return { error: 'Enter your customer’s name.' };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) return { error: 'Enter a valid customer email.' };
+
+  const { error: bizError } = await supabase
+    .from('businesses')
+    .update({ name, google_review_url: url })
+    .eq('id', business.id);
+  if (bizError) return { error: `Could not save your business: ${bizError.message}` };
+
+  const { data: customer, error: custError } = await supabase
+    .from('customers')
+    .insert({ business_id: business.id, name: customerName, email: customerEmail })
+    .select('*')
+    .single();
+  if (custError || !customer) return { error: `Could not add customer: ${custError?.message ?? 'unknown error'}` };
+
+  const { error: reqError } = await supabase.from('review_requests').insert({
+    business_id: business.id,
+    customer_id: customer.id,
+    send_at: new Date().toISOString(), // first request goes out on the next cron run
+  });
+  if (reqError) return { error: `Could not schedule the request: ${reqError.message}` };
+
+  const { data: journey } = await supabase
+    .from('journeys')
+    .select('*')
+    .eq('business_id', business.id)
+    .eq('key', 'review_sequence')
+    .eq('is_active', true)
+    .maybeSingle();
+  if (journey) await enrollCustomerInJourney(supabase, journey, customer.id);
+
+  redirect('/dashboard');
+}

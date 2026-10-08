@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { isAdminEmail, requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
 import { bucketDaily, splitPeriods } from '@/lib/trends';
@@ -135,6 +136,8 @@ export default async function DashboardPage() {
   const hasReviewUrl = Boolean(business.google_review_url);
 
   const customerTotal = customersCount.count ?? 0;
+  // Brand-new business: go straight to the one-form setup.
+  if (!hasReviewUrl && customerTotal === 0) redirect('/onboarding');
   const sent = emailsSentCount.count ?? 0;
   const clicks = clicksCount.count ?? 0;
   const pending = pendingCount.count ?? 0;
