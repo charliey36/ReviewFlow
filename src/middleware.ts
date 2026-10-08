@@ -47,7 +47,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/scan-customer-lifecycle') ||
     pathname.startsWith('/api/ai-test') ||
     pathname.startsWith('/auth/callback');
-  const isPublicPage = pathname.startsWith('/feedback/') || pathname.startsWith('/book/') || pathname.startsWith('/r/') || pathname === '/ai-test';
+  const isPublicPage = pathname.startsWith('/feedback/') || pathname.startsWith('/book/') || pathname.startsWith('/r/') || ['/privacy', '/terms', '/cookies', '/ai-test'].includes(pathname);
 
   if (!user && !isAuthPage && !isPublicApiRoute && !isPublicPage && pathname !== '/') {
     const redirectUrl = new URL('/login', request.url);

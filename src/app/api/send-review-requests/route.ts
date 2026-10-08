@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { notifyOwner } from '@/lib/notifications';
 import { sendReviewRequestEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
@@ -133,6 +134,7 @@ export async function GET(request: NextRequest) {
         .eq('id', reviewRequest.id);
 
       sent += 1;
+      await notifyOwner('campaign', reviewRequest.business_id);
       results.push({ id: reviewRequest.id, status: 'sent' });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';

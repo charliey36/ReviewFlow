@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { notifyOwner } from '@/lib/notifications';
 import { createClient } from '@/lib/supabase/server';
 import type { Business } from '@/lib/database.types';
 
@@ -74,6 +75,8 @@ export async function requireBusiness(): Promise<Business> {
       { business_id: created.id, user_id: userData.user.id, role: 'owner' },
       { onConflict: 'business_id,user_id', ignoreDuplicates: true }
     );
+
+  await notifyOwner('welcome', created.id);
 
   return created;
 }

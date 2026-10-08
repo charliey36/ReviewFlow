@@ -1,3 +1,4 @@
+import { notifyOwner } from '@/lib/notifications';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { enrollCustomerInJourney } from '@/lib/journeys';
@@ -35,6 +36,17 @@ export async function GET(request: NextRequest) {
   if (businessesError) {
     return NextResponse.json({ error: businessesError.message }, { status: 500 });
   }
+
+  // Trial-ending notice: trials ending within 3 days (sent once per business).
+  const soon = new Date(Date.now() + 3 * 86_400_000).toISOString();
+  const { data: endingTrials } = await supabase
+    .from('businesses')
+    .select('id')
+    .eq('subscription_status', 'trialing')
+    .gt('trial_ends_at', new Date().toISOString())
+    .lte('trial_ends_at', soon)
+    .is('trial_ending_email_sent_at', null);
+  for (const b of endingTrials ?? []) await notifyOwner('trial_ending', b.id);
 
   let rebookingEnrolled = 0;
   let winBackEnrolled = 0;

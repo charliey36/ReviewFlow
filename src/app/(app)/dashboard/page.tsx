@@ -15,7 +15,6 @@ import { ProgressRing } from '@/components/ui/progress-ring';
 import { ActivityChart, type ChartSeries } from '@/components/ui/activity-chart';
 import { toneStyle, type Tone } from '@/components/ui/tones';
 import { SetupChecklist, type SetupStep } from '@/components/setup-checklist';
-import { AdminBusinessesTable } from './admin-businesses-table';
 
 export const metadata: Metadata = { title: 'Dashboard' };
 
@@ -154,13 +153,14 @@ export default async function DashboardPage() {
   const sentTrend = buildTrend(sentRows.data?.map((row) => row.sent_at));
   const clicksTrend = buildTrend(clickRows.data?.map((row) => row.clicked_at));
 
+  const hasProfile = Boolean(business.name) && business.name !== 'My Business';
   const setupSteps: SetupStep[] = [
     {
-      done: hasReviewUrl,
-      title: 'Add your Google review link',
-      description: 'So every review request sends customers to the right place.',
+      done: hasProfile,
+      title: 'Complete your business profile',
+      description: 'Your business name appears on every review request.',
       href: '/settings',
-      cta: 'Open settings',
+      cta: 'Add name',
     },
     {
       done: customerTotal > 0,
@@ -170,13 +170,25 @@ export default async function DashboardPage() {
       cta: 'Add customer',
     },
     {
+      done: hasReviewUrl,
+      title: 'Configure your review link',
+      description: 'So every review request sends customers to your Google reviews.',
+      href: '/settings',
+      cta: 'Open settings',
+    },
+    {
       done: sent > 0,
-      title: 'Send your first review request',
+      title: 'Send your first campaign',
       description: `Requests go out automatically ${business.delay_hours}h after a customer is added.`,
       href: '/how-it-works',
       cta: 'See how it works',
     },
   ];
+  // Persist completion so the onboarding card can be hidden for good.
+  const onboardingDone = setupSteps.every((step) => step.done);
+  if (onboardingDone && !business.onboarding_completed_at) {
+    await supabase.from('businesses').update({ onboarding_completed_at: new Date().toISOString() }).eq('id', business.id);
+  }
 
   // Plain-language highlights derived from the numbers above (rule-based, in
   // priority order): things needing attention first, then momentum.
@@ -325,7 +337,17 @@ export default async function DashboardPage() {
       </section>
 
       <div className="reveal" style={{ '--i': 1 } as React.CSSProperties}>
-        <SetupChecklist steps={setupSteps} />
+        {!business.onboarding_completed_at && (
+          <>
+            {customerTotal === 0 && sent === 0 && (
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-ink">Welcome to ReviewFlow</h2>
+                <p className="text-sm text-ink-3">Complete the onboarding steps below to get started.</p>
+              </div>
+            )}
+            <SetupChecklist steps={setupSteps} />
+          </>
+        )}
       </div>
 
       {/* KPIs */}
@@ -561,7 +583,11 @@ export default async function DashboardPage() {
         </SectionCard>
       </div>
 
-      {isAdmin && <AdminBusinessesTable />}
+      {isAdmin && (
+        <Link href="/admin/organisations" className="card mt-6 block px-5 py-4 text-sm font-medium text-ink hover:bg-surface-muted">
+          Manage organisations (admin) →
+        </Link>
+      )}
     </div>
   );
 }

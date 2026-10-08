@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { DeleteOrganisationButton } from '../admin/organisations/delete-organisation-button';
 import { EmptyState } from '@/components/ui/empty-state';
 
 function formatDateTime(value: string) {
@@ -16,7 +17,7 @@ function formatDateTime(value: string) {
  * see every business, bypassing RLS, and the Supabase Admin API to resolve
  * each owner's email from their auth user id.
  */
-export async function AdminBusinessesTable() {
+export async function AdminBusinessesTable({ currentBusinessId }: { currentBusinessId?: string } = {}) {
   const supabase = createAdminClient();
 
   const { data: businesses, error } = await supabase
@@ -70,6 +71,7 @@ export async function AdminBusinessesTable() {
               <th className="text-right">Customers</th>
               <th className="text-right">Delay</th>
               <th>Signed up</th>
+              <th />
             </tr>
           </thead>
           <tbody>
@@ -90,11 +92,14 @@ export async function AdminBusinessesTable() {
                   <td className="text-right tabular-nums">{row.customerCount}</td>
                   <td className="text-right tabular-nums">{row.delay_hours}h</td>
                   <td className="whitespace-nowrap">{formatDateTime(row.created_at)}</td>
+                  <td className="text-right">
+                    {row.id !== currentBusinessId && <DeleteOrganisationButton id={row.id} name={row.name} />}
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={5}>
+                <td colSpan={6}>
                   <EmptyState icon="users" title="No businesses registered yet" className="py-8" />
                 </td>
               </tr>

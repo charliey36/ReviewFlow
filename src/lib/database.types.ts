@@ -15,6 +15,10 @@ export type Database = {
           current_period_end: string | null;
           stripe_customer_id: string | null;
           stripe_subscription_id: string | null;
+          onboarding_completed_at: string | null;
+          welcome_email_sent_at: string | null;
+          campaign_email_sent_at: string | null;
+          trial_ending_email_sent_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -38,6 +42,10 @@ export type Database = {
           current_period_end?: string | null;
           stripe_customer_id?: string | null;
           stripe_subscription_id?: string | null;
+          onboarding_completed_at?: string | null;
+          welcome_email_sent_at?: string | null;
+          campaign_email_sent_at?: string | null;
+          trial_ending_email_sent_at?: string | null;
         };
         Relationships: [];
       };

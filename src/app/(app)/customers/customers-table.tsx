@@ -115,12 +115,17 @@ export function CustomersTable({ rows }: { rows: CustomerRow[] }) {
         <EmptyState
           icon="users"
           title="No customers yet"
-          description="Add your first customer above and a review request is scheduled automatically, or import your existing customers from a CSV."
+          description="Add your first customer to begin sending review requests."
           action={
+            <>
+            <Link href="/customers?add=1" className="btn btn-primary">
+              Add Customer
+            </Link>
             <Link href="/customers/import" className="btn btn-secondary">
               <Icon name="upload" className="h-4 w-4" />
               Import CSV
             </Link>
+            </>
           }
         />
       ) : visible.length === 0 ? (

@@ -605,3 +605,10 @@ alter table public.businesses
   add column if not exists current_period_end timestamptz,
   add column if not exists stripe_customer_id text,
   add column if not exists stripe_subscription_id text;
+
+-- Onboarding + notification flags (see supabase/migrations/0006)
+alter table public.businesses
+  add column if not exists onboarding_completed_at timestamptz,
+  add column if not exists welcome_email_sent_at timestamptz,
+  add column if not exists campaign_email_sent_at timestamptz,
+  add column if not exists trial_ending_email_sent_at timestamptz;

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LegalLinks } from '@/components/legal-links';
 import type { ReactNode } from 'react';
 import { Logo } from '@/components/logo';
 import { Icon } from '@/components/ui/icons';
@@ -48,7 +49,10 @@ export function AuthShell({
           </div>
         </div>
 
-        <p className="text-xs text-ink-4">&copy; {new Date().getFullYear()} ReviewFlow</p>
+        <div className="flex items-center justify-between text-xs text-ink-4">
+          <p>&copy; {new Date().getFullYear()} ReviewFlow</p>
+          <LegalLinks />
+        </div>
       </div>
 
       <aside className="relative hidden overflow-hidden bg-brand-950 lg:block">

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LegalLinks } from '@/components/legal-links';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { Logo } from '@/components/logo';
@@ -384,6 +385,7 @@ export default async function HomePage() {
               Sign up
             </Link>
           </nav>
+          <LegalLinks />
         </div>
       </footer>
     </div>

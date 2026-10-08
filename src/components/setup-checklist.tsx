@@ -93,8 +93,8 @@ export function SetupChecklist({ steps }: { steps: SetupStep[] }) {
           <div>
             <h2 className="text-[17px] font-semibold tracking-[-0.02em] text-ink">Get set up</h2>
             <p className="mt-1 text-[13px] leading-5 text-ink-3">
-              {steps.length - completed} {steps.length - completed === 1 ? 'step' : 'steps'} to start collecting
-              reviews on autopilot.
+              {Math.round((completed / steps.length) * 100)}% complete &middot; {steps.length - completed}{' '}
+              {steps.length - completed === 1 ? 'step' : 'steps'} to start collecting reviews.
             </p>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LegalLinks } from '@/components/legal-links';
 import { getBillingState } from '@/lib/billing';
 import { requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
@@ -70,6 +71,9 @@ export default async function AppLayout({
                 )}
                 {children}
               </main>
+              <footer className="mx-auto flex w-full max-w-6xl justify-end px-4 pb-6 sm:px-6 lg:px-8">
+                <LegalLinks />
+              </footer>
             </AppContentShell>
           </div>
         </CommandPaletteProvider>
