@@ -1,4 +1,4 @@
--- DEMO ONLY: simulates a company's own job/booking database that ReviewFlow
+-- DEMO ONLY: simulates a company's own job/booking database that Pentriq
 -- syncs from. Add a row in the Supabase Table Editor; the sync imports it.
 -- business_id defaults to the Charlie test organisation.
 create table if not exists public.demo_company_records (
@@ -15,7 +15,7 @@ create table if not exists public.demo_company_records (
 );
 alter table public.demo_company_records enable row level security; -- server-only
 
--- Sample rows (appear in ReviewFlow after the first sync)
+-- Sample rows (appear in Pentriq after the first sync)
 insert into public.demo_company_records (customer_name, email, phone, amount_spent, service_date) values
   ('Alice Walker', 'alice.walker@example.com', '07700900001', 120, current_date - 2),
   ('Bob Henderson', 'bob.henderson@example.com', '07700900002', 85.5, current_date - 10);

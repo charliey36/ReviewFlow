@@ -1,4 +1,4 @@
--- Migration: billing state for the single ReviewFlow monthly plan.
+-- Migration: billing state for the single Pentriq monthly plan.
 -- Stripe is not wired yet; these columns are the only state Stripe webhooks
 -- will need to write later. Safe to re-run.
 alter table public.businesses

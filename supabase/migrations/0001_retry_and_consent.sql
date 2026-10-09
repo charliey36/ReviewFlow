@@ -1,5 +1,5 @@
 -- Migration: failed-send retry support + unsubscribe/consent.
--- Safe to run against an existing ReviewFlow database that was created from
+-- Safe to run against an existing Pentriq database that was created from
 -- an earlier version of schema.sql. All changes are additive; nothing is
 -- dropped. Run this once in the Supabase SQL editor (or via `supabase db
 -- push`) on any project that predates this migration.

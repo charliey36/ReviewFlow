@@ -40,9 +40,9 @@ export const STORAGE_KEYS = {
  * sidebar / "setup dismissed" preference instead of being reset.
  */
 export const LEGACY_STORAGE_KEYS = {
-  theme: 'reviewflow-theme',
-  sidebarOpen: 'reviewflow-sidebar-open',
-  setupDismissed: 'reviewflow-setup-dismissed',
+  theme: 'pentriq-theme',
+  sidebarOpen: 'pentriq-sidebar-open',
+  setupDismissed: 'pentriq-setup-dismissed',
 } as const;
 
 /** "{business} via Pentriq" — the display name on outgoing customer emails. */
