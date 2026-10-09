@@ -176,6 +176,16 @@ fallback — not left out, but not fake either:
      [`supabase/migrations/0004_business_logo_storage.sql`](./supabase/migrations/0004_business_logo_storage.sql)
      (creates the public `business-logos` Storage bucket and its RLS
      policies, used by the profile picture uploader in Settings).
+   - **Migrations 0005–0017 are also required** for the current app. Apply
+     every file in `supabase/migrations/` in numeric order. In particular,
+     [`0017_ensure_business_settings_columns.sql`](./supabase/migrations/0017_ensure_business_settings_columns.sql)
+     guarantees the columns the Settings page saves
+     (`review_request_window_days`, `rebooking_reminder_interval_days`,
+     `rebooking_reminders_enabled`) exist and reloads the PostgREST schema
+     cache (`notify pgrst, 'reload schema'`). If Settings fails to save with
+     *"Could not find the '…' column of 'businesses' in the schema cache"*,
+     run it in the Supabase SQL editor; the app also logs this at startup
+     (`DATABASE SCHEMA VALIDATION FAILED`).
 3. From Project Settings → API, copy:
    - Project URL
    - `anon` public key

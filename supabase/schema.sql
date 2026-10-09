@@ -663,3 +663,6 @@ alter table public.messages add column if not exists visit_id uuid references pu
 
 -- Rebooking toggle (see migrations/0012)
 alter table public.businesses add column if not exists rebooking_reminders_enabled boolean not null default true;
+
+-- Reload PostgREST's schema cache so columns added above are usable immediately.
+notify pgrst, 'reload schema';

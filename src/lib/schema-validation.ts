@@ -1,7 +1,17 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
+import { isMissingColumnError, missingColumnName } from '@/lib/db-errors';
 
 type Db = SupabaseClient<Database>;
+
+/** Columns on public.businesses that the Settings page reads and writes. */
+export const REQUIRED_BUSINESS_COLUMNS = [
+  'name',
+  'google_review_url',
+  'review_request_window_days',
+  'rebooking_reminder_interval_days',
+  'rebooking_reminders_enabled',
+] as const;
 
 export interface SchemaValidationResult {
   isValid: boolean;
@@ -64,6 +74,30 @@ export async function validateDatabaseSchema(supabase: Db): Promise<SchemaValida
 
     if (customerError) {
       result.errors.push(`Customers table error: ${customerError.message}`);
+    }
+
+    // Check businesses settings columns. Selecting them explicitly fails with
+    // "Could not find the 'x' column ... in the schema cache" if a migration
+    // (0007 / 0012 / 0017) has not been applied — surface that at startup
+    // rather than on the first Settings save.
+    const { error: businessError } = await supabase
+      .from('businesses')
+      .select(REQUIRED_BUSINESS_COLUMNS.join(', '))
+      .limit(1);
+
+    if (businessError) {
+      if (isMissingColumnError(businessError)) {
+        const column = missingColumnName(businessError) ?? 'unknown column';
+        result.missingColumns.push(`businesses.${column}`);
+        result.errors.push(
+          `Missing required column: businesses.${column}\n` +
+          'Settings cannot be saved until this is fixed.\n' +
+          'To fix: run supabase/migrations/0017_ensure_business_settings_columns.sql in the Supabase SQL editor\n' +
+          "(it adds the column and runs NOTIFY pgrst, 'reload schema')."
+        );
+      } else {
+        result.errors.push(`Businesses table error: ${businessError.message}`);
+      }
     }
 
     if (result.errors.length > 0) {

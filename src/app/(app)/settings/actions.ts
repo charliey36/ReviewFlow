@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { requireBusiness } from '@/lib/business';
+import { friendlySaveError, isMissingColumnError, missingColumnName } from '@/lib/db-errors';
+import { parseSettingsForm } from '@/lib/settings-validation';
 
 export type SaveSettingsResult = { error?: string; success?: boolean };
 
@@ -11,43 +13,49 @@ export async function saveSettings(
   formData: FormData
 ): Promise<SaveSettingsResult> {
   const business = await requireBusiness();
-  const supabase = createClient();
 
-  const name = String(formData.get('name') ?? '').trim();
-  const googleReviewUrl = String(formData.get('google_review_url') ?? '').trim();
-
-  const windowDays = Math.round(Number(formData.get('review_request_window_days')));
-  const rebookDays = Math.round(Number(formData.get('rebooking_reminder_interval_days')));
-  if (!Number.isFinite(windowDays) || windowDays < 1 || !Number.isFinite(rebookDays) || rebookDays < 1) {
-    return { error: 'Review window and rebooking interval must be at least 1 day.' };
+  const parsed = parseSettingsForm(formData);
+  if (!parsed.ok) {
+    return { error: parsed.error };
   }
 
-  if (!name) {
-    return { error: 'Business name is required.' };
-  }
+  try {
+    const supabase = createClient();
 
-  if (googleReviewUrl) {
-    try {
-      // eslint-disable-next-line no-new
-      new URL(googleReviewUrl);
-    } catch {
-      return { error: 'Google review URL must be a valid URL (e.g. https://g.page/r/...).' };
+    // `.select('id')` makes the write observable: an update that matches no
+    // rows (e.g. blocked by RLS) returns [] with no error, which would
+    // otherwise look like a successful save.
+    const { data, error } = await supabase
+      .from('businesses')
+      .update(parsed.values)
+      .eq('id', business.id)
+      .select('id');
+
+    if (error) {
+      // Full technical detail goes to the server log; the user gets a safe message.
+      console.error('[Settings] Failed to save business settings', {
+        businessId: business.id,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        missingColumn: isMissingColumnError(error) ? missingColumnName(error) : undefined,
+        fix: isMissingColumnError(error)
+          ? 'Apply supabase/migrations/0017_ensure_business_settings_columns.sql (it also reloads the PostgREST schema cache).'
+          : undefined,
+      });
+      return { error: friendlySaveError(error) };
     }
-  }
 
-  const { error } = await supabase
-    .from('businesses')
-    .update({
-      name,
-      google_review_url: googleReviewUrl,
-      review_request_window_days: windowDays,
-      rebooking_reminder_interval_days: rebookDays,
-      rebooking_reminders_enabled: formData.get('rebooking_reminders_enabled') === 'on',
-    })
-    .eq('id', business.id);
-
-  if (error) {
-    return { error: `Failed to save settings: ${error.message}` };
+    if (!data || data.length === 0) {
+      console.error('[Settings] Update matched no rows (blocked by RLS or business missing)', {
+        businessId: business.id,
+      });
+      return { error: "Your settings weren't saved because your account couldn't update this business. Please sign out and back in, then try again." };
+    }
+  } catch (e) {
+    console.error('[Settings] Unexpected error saving business settings', { businessId: business.id, error: e });
+    return { error: 'Something went wrong while saving your settings. Please try again in a moment.' };
   }
 
   revalidatePath('/settings');
