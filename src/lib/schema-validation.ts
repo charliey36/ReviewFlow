@@ -34,12 +34,18 @@ export async function validateDatabaseSchema(supabase: Db): Promise<SchemaValida
   };
 
   try {
+    // The four checks are independent, so run them concurrently (one round
+    // trip of latency instead of four). Each works by attempting a query that
+    // fails if a table/column is missing.
+    const [messagesRes, visitsRes, customersRes, businessesRes] = await Promise.all([
+      supabase.from('messages').select('id, visit_id').limit(1),
+      supabase.from('visits').select('id, customer_id, service_id, visited_at').limit(1),
+      supabase.from('customers').select('id, name, email, business_id').limit(1),
+      supabase.from('businesses').select(REQUIRED_BUSINESS_COLUMNS.join(', ')).limit(1),
+    ]);
+
     // Check if messages table has visit_id column
-    // We do this by attempting a query that would fail if the column doesn't exist
-    const { data, error } = await supabase
-      .from('messages')
-      .select('id, visit_id')
-      .limit(1);
+    const { error } = messagesRes;
 
     if (error) {
       if (error.message.includes('visit_id') && error.message.includes('schema cache')) {
@@ -57,20 +63,14 @@ export async function validateDatabaseSchema(supabase: Db): Promise<SchemaValida
     }
 
     // Check if visits table exists and has required columns
-    const { data: visitData, error: visitError } = await supabase
-      .from('visits')
-      .select('id, customer_id, service_id, visited_at')
-      .limit(1);
+    const { error: visitError } = visitsRes;
 
     if (visitError) {
       result.errors.push(`Visits table error: ${visitError.message}`);
     }
 
     // Check if customers table has required columns
-    const { data: customerData, error: customerError } = await supabase
-      .from('customers')
-      .select('id, name, email, business_id')
-      .limit(1);
+    const { error: customerError } = customersRes;
 
     if (customerError) {
       result.errors.push(`Customers table error: ${customerError.message}`);
@@ -80,10 +80,7 @@ export async function validateDatabaseSchema(supabase: Db): Promise<SchemaValida
     // "Could not find the 'x' column ... in the schema cache" if a migration
     // (0007 / 0012 / 0017) has not been applied — surface that at startup
     // rather than on the first Settings save.
-    const { error: businessError } = await supabase
-      .from('businesses')
-      .select(REQUIRED_BUSINESS_COLUMNS.join(', '))
-      .limit(1);
+    const { error: businessError } = businessesRes;
 
     if (businessError) {
       if (isMissingColumnError(businessError)) {
@@ -109,6 +106,37 @@ export async function validateDatabaseSchema(supabase: Db): Promise<SchemaValida
   }
 
   return result;
+}
+
+// Result of the last check, kept per server process so the app shell doesn't
+// re-run four database queries on every page load.
+let lastResult: SchemaValidationResult | null = null;
+let lastCheckedAt = 0;
+let inFlight: Promise<SchemaValidationResult> | null = null;
+const RECHECK_WHEN_INVALID_MS = 60_000;
+
+/**
+ * Runs validateDatabaseSchema at most once per server process while the
+ * schema is healthy. If a problem was found it is re-checked at most once a
+ * minute, so applying a migration clears the warning without a restart.
+ * Concurrent callers share one in-flight check.
+ */
+export async function ensureSchemaValidated(supabase: Db): Promise<SchemaValidationResult> {
+  const fresh = lastResult && (lastResult.isValid || Date.now() - lastCheckedAt < RECHECK_WHEN_INVALID_MS);
+  if (fresh && lastResult) return lastResult;
+  if (!inFlight) {
+    inFlight = validateDatabaseSchema(supabase)
+      .then((result) => {
+        lastResult = result;
+        lastCheckedAt = Date.now();
+        logSchemaValidation(result);
+        return result;
+      })
+      .finally(() => {
+        inFlight = null;
+      });
+  }
+  return inFlight;
 }
 
 /**

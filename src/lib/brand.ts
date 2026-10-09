@@ -35,6 +35,18 @@ export const STORAGE_KEYS = {
   setupDismissed: `${APP_SLUG}-setup-dismissed`,
 } as const;
 
+/**
+ * Public base URL of the deployed app. Every link we put in customer emails
+ * (review tracking, private feedback, unsubscribe, rebooking, hosted logo)
+ * is built from this, so it must be the real public address — never localhost.
+ * Override with NEXT_PUBLIC_APP_URL (e.g. for a custom domain or a staging site).
+ */
+export const DEFAULT_APP_URL = 'https://pentriq-blond.vercel.app';
+
+export function getAppUrl(): string {
+  return (process.env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL).trim().replace(/\/+$/, '');
+}
+
 /** "{business} via Pentriq" — the display name on outgoing customer emails. */
 export function senderDisplayName(businessName: string): string {
   return `${businessName} via ${APP_NAME}`;

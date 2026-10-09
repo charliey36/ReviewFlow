@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { requireBusiness } from '@/lib/business';
 import { PageHeader } from '@/components/ui/page-header';
 import { SectionCard } from '@/components/ui/section-card';
-import { EmailDiagnosticsPanel } from './email-diagnostics-panel';
 
 export const metadata: Metadata = { title: 'Email Settings' };
 
@@ -16,18 +15,11 @@ export default async function EmailSettingsPage() {
         title="Email Configuration"
         icon="mail"
         tone="slate"
-        description="Manage your email provider settings and test email delivery."
+        description="Manage how Pentriq sends email to your customers."
         back={{ href: '/settings', label: 'Settings' }}
       />
 
       <div className="space-y-6">
-        <SectionCard
-          title="Email Provider"
-          description="Pentriq uses Resend to send transactional emails to your customers."
-        >
-          <EmailDiagnosticsPanel />
-        </SectionCard>
-
         <SectionCard
           title="Review email design"
           description="Preview the branded review request and reminder emails exactly as customers will see them, on desktop and mobile."

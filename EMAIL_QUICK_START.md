@@ -1,3 +1,5 @@
+> **Note:** the email diagnostics panel and the "Email Configuration Test" send (`/api/send-test-email`, `/api/email-diagnostics`) described in this document have been removed from the app. Sandbox-error translation remains.
+
 # Quick Start: Email Diagnostics & Sandbox Detection
 
 ## 🚀 What You Can Do Now

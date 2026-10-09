@@ -9,6 +9,7 @@ import { CopyButton } from '@/components/ui/copy-button';
 import { SettingsTabs } from '@/components/settings-tabs';
 import { ApiKeyPanel } from './api-key-panel';
 import { ActionButton } from './sync-demo-button';
+import { getAppUrl } from '@/lib/brand';
 
 export const metadata: Metadata = { title: 'Integrations' };
 
@@ -21,7 +22,7 @@ export default async function IntegrationsPage() {
   const info = await getApiKeyInfo(business.id);
   const newKey = info ? null : await generateApiKey(business.id);
 
-  const base = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const base = getAppUrl();
   const endpoint = `${base}/api/integrations/service-completed`;
 
   const { data: events } = await createAdminClient()

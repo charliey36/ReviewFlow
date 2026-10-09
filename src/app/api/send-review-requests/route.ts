@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { notifyOwner } from '@/lib/notifications';
 import { sendReviewRequestEmail } from '@/lib/email';
+import { getAppUrl } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ sent: 0, failed: 0, retried: 0, message: 'No due review requests.' });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const appUrl = getAppUrl();
 
   let sent = 0;
   let retried = 0;

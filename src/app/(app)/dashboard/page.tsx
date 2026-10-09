@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { isAdminEmail, requireBusiness } from '@/lib/business';
+import { getAuthUser, isAdminEmail, requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
 import { bucketDaily, splitPeriods } from '@/lib/trends';
 import { StatCard, type StatTrend } from '@/components/ui/stat-card';
@@ -54,8 +54,7 @@ export default async function DashboardPage() {
   const business = await requireBusiness();
   const supabase = createClient();
 
-  const { data: userData } = await supabase.auth.getUser();
-  const isAdmin = isAdminEmail(userData.user?.email);
+  const isAdmin = isAdminEmail((await getAuthUser())?.email);
 
   const since = new Date();
   since.setUTCHours(0, 0, 0, 0);

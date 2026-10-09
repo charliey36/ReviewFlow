@@ -36,8 +36,11 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data } = await supabase.auth.getUser();
-  const user = data.user;
+  // getClaims() verifies the session JWT locally against the project's cached
+  // signing keys (and refreshes the session if it has expired), so this no
+  // longer costs a network round trip to the Auth server on every request.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
 
   const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password';
   const isPublicApiRoute = pathname.startsWith('/api/track') ||

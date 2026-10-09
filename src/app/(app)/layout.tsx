@@ -3,8 +3,7 @@ import { LegalLinks } from '@/components/legal-links';
 import { getBillingState } from '@/lib/billing';
 import { requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
-import { validateDatabaseSchema, logSchemaValidation } from '@/lib/schema-validation';
-import { formatDiagnostics, getEmailDiagnostics } from '@/lib/email-sandbox';
+import { ensureSchemaValidated } from '@/lib/schema-validation';
 import { logout } from '@/app/(app)/actions';
 import { SidebarProvider } from '@/components/sidebar-context';
 import { SidebarDrawer } from '@/components/sidebar-drawer';
@@ -26,36 +25,22 @@ export default async function AppLayout({
   const business = await requireBusiness();
   const supabase = createClient();
   
-  // Validate database schema on app load (first render only, cached afterward)
-  // Wrapped in try-catch to prevent layout crashes if validation fails
-  try {
-    const schemaValidation = await validateDatabaseSchema(supabase);
-    if (!schemaValidation.isValid) {
-      logSchemaValidation(schemaValidation);
-    }
-  } catch (e) {
-    console.error('[Schema Validation] Error during validation:', e);
-    // Don't block layout render if validation fails
-  }
-
-  // Validate email provider configuration on app load
-  try {
-    const emailDiag = await getEmailDiagnostics();
-    console.log('[App Startup]', formatDiagnostics(emailDiag));
-  } catch (e) {
-    console.error('[Email Configuration] Error during validation:', e);
-    // Don't block layout render if email validation fails
-  }
-  
   const billing = getBillingState(business);
 
   // Unread private feedback, surfaced as a badge on the sidebar item. A failed
   // count must never break the shell, so errors just fall back to zero.
-  const { count: newFeedbackCount } = await supabase
-    .from('private_feedback')
-    .select('id', { count: 'exact', head: true })
-    .eq('business_id', business.id)
-    .eq('status', 'new');
+  // The schema check runs once per server process (not per render) and never
+  // blocks or breaks the shell if it fails; it shares the same wait as the count.
+  const [{ count: newFeedbackCount }] = await Promise.all([
+    supabase
+      .from('private_feedback')
+      .select('id', { count: 'exact', head: true })
+      .eq('business_id', business.id)
+      .eq('status', 'new'),
+    ensureSchemaValidated(supabase).catch((e) => {
+      console.error('[Schema Validation] Error during validation:', e);
+    }),
+  ]);
 
   return (
     <SidebarProvider>

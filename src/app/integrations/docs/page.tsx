@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
 import { LegalLinks } from '@/components/legal-links';
+import { getAppUrl } from '@/lib/brand';
 
 export const metadata: Metadata = { title: 'Integration docs' };
 
@@ -12,7 +13,7 @@ const H = ({ children }: { children: string }) => <h2 className="mt-10 text-lg f
 const P = ({ children }: { children: React.ReactNode }) => <p className="mt-2 text-[15px] leading-7 text-ink-2">{children}</p>;
 
 export default function IntegrationDocsPage() {
-  const base = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const base = getAppUrl();
   return (
     <div className="flex min-h-screen flex-col">
       <header className="mx-auto w-full max-w-3xl px-4 py-6">

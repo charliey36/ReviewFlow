@@ -3,7 +3,7 @@
  * back into user-facing source, and checks the central brand constants and
  * that rendered emails carry the new name.
  */
-import { describe, it, expect } from '@jest/globals';
+import { afterEach, describe, it, expect } from '@jest/globals';
 import { readdirSync, readFileSync, statSync } from 'fs';
 import { join, relative } from 'path';
 import {
@@ -12,6 +12,8 @@ import {
   APP_NAME_LEAD,
   APP_SLUG,
   APP_TITLE,
+  DEFAULT_APP_URL,
+  getAppUrl,
   senderDisplayName,
 } from '../brand';
 import { renderMessage } from '../templates';
@@ -42,6 +44,40 @@ describe('brand constants', () => {
     expect(APP_SLUG).toBe('pentriq');
     expect(APP_TITLE.startsWith('Pentriq')).toBe(true);
     expect(senderDisplayName('Acme')).toBe('Acme via Pentriq');
+  });
+});
+
+describe('public app URL', () => {
+  const original = process.env.NEXT_PUBLIC_APP_URL;
+  afterEach(() => {
+    if (original === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+    else process.env.NEXT_PUBLIC_APP_URL = original;
+  });
+
+  it('defaults to the Pentriq deployment, never localhost', () => {
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    expect(DEFAULT_APP_URL).toBe('https://pentriq-blond.vercel.app');
+    expect(getAppUrl()).toBe('https://pentriq-blond.vercel.app');
+    process.env.NEXT_PUBLIC_APP_URL = '';
+    expect(getAppUrl()).toBe('https://pentriq-blond.vercel.app');
+  });
+
+  it('honours an override and strips trailing slashes', () => {
+    process.env.NEXT_PUBLIC_APP_URL = 'https://example.org/';
+    expect(getAppUrl()).toBe('https://example.org');
+  });
+
+  it('hosted email assets (logo) use the public URL', () => {
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    const { html } = renderMessage('review_request', 'email', {
+      businessName: 'Acme',
+      customerName: 'Alex',
+      publicReviewUrl: `${getAppUrl()}/api/track-message/m1`,
+      privateFeedbackUrl: `${getAppUrl()}/feedback/m1`,
+    });
+    expect(html).toContain('https://pentriq-blond.vercel.app/email-assets/logo-mark.png');
+    expect(html).toContain('https://pentriq-blond.vercel.app/api/track-message/m1');
+    expect(html).not.toContain('localhost');
   });
 });
 

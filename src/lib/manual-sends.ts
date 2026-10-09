@@ -31,7 +31,7 @@ import { sendQueuedReview } from '@/lib/review-queue';
 import { extractReviewSchedulingLogic, isDuplicateReviewRequest } from '@/lib/review-scheduling';
 import { isDemoCustomer, simulateDemoEmailSend } from '@/lib/demo-mode';
 import { todayIso } from '@/lib/eligibility';
-import { senderDisplayName } from '@/lib/brand';
+import { senderDisplayName, getAppUrl } from '@/lib/brand';
 
 type Db = SupabaseClient<Database>;
 
@@ -163,7 +163,7 @@ export async function sendManualRebookingReminderFor(
     return { ok: false, error: `Failed to create reminder: ${insertError?.message ?? 'unknown error'}` };
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const appUrl = getAppUrl();
 
   try {
     const rendered = renderMessage('rebooking_reminder', channel, {

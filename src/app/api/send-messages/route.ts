@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { sendMessage, resolveChannel } from '@/lib/messaging';
 import { renderMessage } from '@/lib/templates';
 import { advanceJourneyEnrollment } from '@/lib/journeys';
-import { senderDisplayName } from '@/lib/brand';
+import { senderDisplayName, getAppUrl } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ sent: 0, retried: 0, failed: 0, skipped: 0, message: 'No due messages.' });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const appUrl = getAppUrl();
 
   let sent = 0;
   let retried = 0;

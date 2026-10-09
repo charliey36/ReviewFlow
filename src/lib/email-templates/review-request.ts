@@ -27,7 +27,7 @@
  * independent of anything about the customer — see lib/compliance.ts.
  */
 import { escapeHtml } from '@/lib/html';
-import { APP_NAME, APP_NAME_ACCENT, APP_NAME_LEAD } from '@/lib/brand';
+import { APP_NAME, APP_NAME_ACCENT, APP_NAME_LEAD, getAppUrl } from '@/lib/brand';
 import {
   REVIEW_PLATFORMS,
   isSafeHttpUrl,
@@ -49,7 +49,7 @@ export type ReviewEmailParams = {
   unsubscribeUrl?: string | null;
   /** Optional business contact details shown in the footer. */
   businessContact?: { email?: string | null; phone?: string | null; website?: string | null };
-  /** Base URL for hosted email assets. '' = relative (preview). Defaults to NEXT_PUBLIC_APP_URL. */
+  /** Base URL for hosted email assets. '' = relative (preview). Defaults to the app's public URL. */
   appUrl?: string;
 };
 
@@ -241,7 +241,7 @@ export function renderReviewRequestEmail(params: ReviewEmailParams = {}): Render
   const ctaNote =
     REVIEW_EMAIL_COPY.ctaNote + (platformLabel && reviewHref ? ` · Opens ${platformLabel}` : '');
 
-  const base = (params.appUrl ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/+$/, '');
+  const base = (params.appUrl ?? getAppUrl()).replace(/\/+$/, '');
   const logoSrc = `${base}/email-assets/logo-mark.png`;
 
   const contact = contactLine(params.businessContact);

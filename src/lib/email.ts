@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 import { renderReviewRequestEmail } from '@/lib/email-templates/review-request';
-import { APP_NAME, senderDisplayName } from '@/lib/brand';
+import { APP_NAME, senderDisplayName, getAppUrl } from '@/lib/brand';
 
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
@@ -86,7 +86,7 @@ function layout(body: string) {
 }
 
 export function buildNotificationEmail(kind: NotificationKind, businessName: string) {
-  const app = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const app = getAppUrl();
   const name = escapeHtml(businessName);
   const button = (href: string, label: string) =>
     `<p style="margin:24px 0"><a href="${href}" style="background:#188038;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">${label}</a></p>`;

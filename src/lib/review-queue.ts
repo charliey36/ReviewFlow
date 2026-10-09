@@ -4,7 +4,7 @@ import { advanceJourneyEnrollment } from '@/lib/journeys';
 import { renderMessage } from '@/lib/templates';
 import { resolveChannel, sendMessage } from '@/lib/messaging';
 import { isDemoCustomer, simulateDemoEmailSend } from '@/lib/demo-mode';
-import { senderDisplayName } from '@/lib/brand';
+import { senderDisplayName, getAppUrl } from '@/lib/brand';
 
 /**
  * Sends one queued review request immediately, using the same compliant
@@ -59,7 +59,7 @@ export async function sendQueuedReview(
     return { ok: false, error: `${customer.name} has unsubscribed.` };
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const appUrl = getAppUrl();
   
   // Check if this is a demo account - if so, simulate the send for polished demo
   const isDemo = isDemoCustomer(customer);

@@ -15,26 +15,51 @@ import type { Business } from '@/lib/database.types';
  * billing/ownership record, but a business could in principle have more
  * than one member in the future without any RLS rewrite.
  */
+/**
+ * The signed-in user's id and email, verified from the session JWT.
+ *
+ * Uses getClaims(), which checks the token's signature locally against the
+ * project's cached public keys instead of making a network round trip to the
+ * Auth server (as getUser() does) — about 100ms saved per call. Memoised per
+ * request so the layout, the page and requireBusiness() share one check.
+ */
+export const getAuthUser = cache(async (): Promise<{ id: string; email: string | null } | null> => {
+  const supabase = createClient();
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (error || !claims?.sub) return null;
+  return { id: claims.sub, email: typeof claims.email === 'string' ? claims.email : null };
+});
+
 async function loadBusiness(): Promise<Business> {
   const supabase = createClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
-  if (userError || !userData.user) {
+  if (!user) {
     redirect('/login');
   }
+  const userData = { user };
 
+  // One round trip: the membership row plus its business via the foreign key
+  // (previously two sequential queries). RLS applies to the embedded row too.
   const { data: membership, error: membershipError } = await supabase
     .from('business_members')
-    .select('business_id')
-    .eq('user_id', userData.user.id)
-    .maybeSingle();
+    .select('business_id, businesses(*)')
+    .eq('user_id', user.id)
+    .maybeSingle()
+    .returns<{ business_id: string; businesses: Business | null } | null>();
 
   if (membershipError) {
   console.error('membershipError', membershipError);
   throw new Error(`Failed to load business: ${membershipError.message}`);
 }
 
+  if (membership?.businesses) {
+    return membership.businesses;
+  }
+
   if (membership) {
+    // Embedded row unavailable (e.g. policy difference) — fall back to a direct lookup.
     const { data: business, error: businessError } = await supabase
       .from('businesses')
       .select('*')
