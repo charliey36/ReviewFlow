@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2880" height="800" viewBox="0 0 720 200" role="img" aria-labelledby="t d">
+  <title id="t">Pentriq</title>
+  <desc id="d">Pentriq logo: a white paper plane on a green rounded tile, followed by the Pentriq wordmark.</desc>
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#10b981"/>
+      <stop offset="1" stop-color="#047857"/>
+    </linearGradient>
+  </defs>
+  <rect x="20" y="40" width="120" height="120" rx="28" fill="url(#tile)"/>
+  <rect x="20.5" y="40.5" width="119" height="119" rx="27.5" fill="none" stroke="#065f46" stroke-opacity="0.45"/>
+  <g transform="translate(46.4 66.4) scale(2.8)" fill="none" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21.44 2.56 2.75 9.77c-.7.27-.69 1.28.02 1.53l6.9 2.44c.32.11.57.36.68.68l2.44 6.9c.25.71 1.26.72 1.53.02l7.21-18.69c.24-.63-.4-1.27-1.03-1.03z"/>
+    <path d="M21.4 2.6 9.7 14.3"/>
+  </g>
+  <text x="168" y="128" font-family="Inter, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="88" font-weight="700" letter-spacing="-3" fill="#0f172a">Pentr<tspan fill="#059669">iq</tspan></text>
+</svg>
