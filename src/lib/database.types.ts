@@ -107,6 +107,7 @@ export type Database = {
           unsubscribed_at: string | null;
           unsubscribed_sms_at: string | null;
           created_at: string;
+          archived_at: string | null;
         };
         Insert: {
           id?: string;
@@ -121,6 +122,7 @@ export type Database = {
           source?: string | null;
           unsubscribed_at?: string | null;
           unsubscribed_sms_at?: string | null;
+          archived_at?: string | null;
         };
         Update: {
           name?: string;
@@ -133,6 +135,7 @@ export type Database = {
           source?: string | null;
           unsubscribed_at?: string | null;
           unsubscribed_sms_at?: string | null;
+          archived_at?: string | null;
         };
         Relationships: [
           {

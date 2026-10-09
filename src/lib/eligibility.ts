@@ -1,4 +1,3 @@
-import { reviewSendTime } from '@/lib/send-window';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
 
@@ -39,8 +38,13 @@ export function parseServiceDate(raw: string): string | null {
 
 /**
  * Schedules the review request for a customer who has just received a service:
- * emailed 09:00 the next day (UK time), followed by the day-3 / day-7 reminders.
- * Skips if a request is already queued or scheduled.
+ * enrolled in the review_sequence journey (initial request + day-3 / day-7
+ * reminders) with the first send at 09:00 the next day (UK time). Skips if a
+ * request is already queued or scheduled.
+ *
+ * Thin wrapper over the shared scheduling engine (see
+ * `@/lib/review-scheduling`) so this legacy entry point and the newer manual
+ * visit-logging / manual-send flows all schedule reviews the same way.
  */
 export async function scheduleReviewRequest(
   supabase: SupabaseClient<Database>,
@@ -49,36 +53,11 @@ export async function scheduleReviewRequest(
   customerId: string,
   serviceDate: string = todayIso()
 ) {
-  const { data: active } = await supabase
-    .from('messages')
-    .select('id')
-    .eq('customer_id', customerId)
-    .eq('purpose', 'review_request')
-    .in('status', ['queued', 'pending'])
-    .limit(1);
-  if (active && active.length > 0) return;
-
-  const sendAt = reviewSendTime(serviceDate);
-  const { data: journey } = await supabase
-    .from('journeys')
-    .select('*')
-    .eq('business_id', businessId)
-    .eq('key', 'review_sequence')
-    .eq('is_active', true)
-    .maybeSingle();
-
-  if (journey) {
-    const { enrollCustomerInJourney } = await import('@/lib/journeys');
-    await enrollCustomerInJourney(supabase, journey, customerId, sendAt);
-  } else {
-    await supabase.from('messages').insert({
-      business_id: businessId,
-      customer_id: customerId,
-      purpose: 'review_request',
-      channel: 'email',
-      send_at: sendAt.toISOString(),
-    });
-  }
+  const { extractReviewSchedulingLogic } = await import('@/lib/review-scheduling');
+  await extractReviewSchedulingLogic(supabase, businessId, customerId, {
+    serviceDate,
+    autoSend: true,
+  });
 }
 
 /** Parses "350", "£1,250.50" etc. Empty = 0. Returns null if not a valid non-negative number. */

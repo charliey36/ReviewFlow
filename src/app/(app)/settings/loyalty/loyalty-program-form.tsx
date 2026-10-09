@@ -97,7 +97,7 @@ export function LoyaltyProgramForm({ program }: { program: LoyaltyProgram | null
               name="redemption_reward_description"
               type="text"
               required
-              defaultValue={program?.redemption_reward_description ?? '$10 off your next visit'}
+              defaultValue={program?.redemption_reward_description ?? '£10 off your next visit'}
               className="input mt-1.5"
             />
           </div>

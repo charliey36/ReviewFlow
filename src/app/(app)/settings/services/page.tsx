@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { SettingsTabs } from '@/components/settings-tabs';
 import { AddServiceForm } from './add-service-form';
 import { DeactivateServiceButton } from './deactivate-service-button';
+import { formatUKCurrency } from '@/lib/uk-defaults';
 
 export const metadata: Metadata = { title: 'Services' };
 
@@ -60,7 +61,7 @@ export default async function ServicesPage() {
                       )}
                     </td>
                     <td className="text-right tabular-nums">
-                      {service.default_price != null ? `$${service.default_price.toFixed(2)}` : '\u2014'}
+                      {service.default_price != null ? formatUKCurrency(service.default_price) : '\u2014'}
                     </td>
                     <td className="text-right">
                       <DeactivateServiceButton serviceId={service.id} serviceName={service.name} />

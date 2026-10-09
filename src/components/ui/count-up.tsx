@@ -47,7 +47,7 @@ export function CountUp({
     return () => cancelAnimationFrame(frame);
   }, [value, duration]);
 
-  const text = display.toLocaleString('en-US', {
+  const text = display.toLocaleString('en-GB', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });

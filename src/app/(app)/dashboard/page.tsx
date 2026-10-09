@@ -252,9 +252,9 @@ export default async function DashboardPage() {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
   const chartLabels = Array.from({ length: WINDOW_DAYS }, (_, index) =>
-    new Date(today.getTime() - (WINDOW_DAYS - 1 - index) * DAY_MS).toLocaleDateString('en-US', {
-      month: 'short',
+    new Date(today.getTime() - (WINDOW_DAYS - 1 - index) * DAY_MS).toLocaleDateString('en-GB', {
       day: 'numeric',
+      month: 'short',
       timeZone: 'UTC',
     })
   );

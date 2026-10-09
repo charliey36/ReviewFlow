@@ -40,7 +40,7 @@ const features: { title: string; description: string; icon: IconName; tone: Tone
   {
     title: 'Dynamic segments',
     description:
-      'Build live segments like \u201c60+ days since last visit and $200+ lifetime value\u201d that never go stale.',
+      'Build live segments like \u201c60+ days since last visit and £200+ lifetime value\u201d that never go stale.',
     icon: 'funnel',
     tone: 'rose',
   },

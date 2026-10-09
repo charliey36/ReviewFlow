@@ -104,7 +104,7 @@ export default async function AnalyticsPage() {
           label="Revenue from rebooking reminders"
           tone="emerald"
           icon="chart"
-          value={<CountUp value={revenueAttribution.totalAttributed} prefix="$" decimals={2} />}
+          value={<CountUp value={revenueAttribution.totalAttributed} prefix="£" decimals={2} />}
           hint={`${revenueAttribution.attributedVisitCount} visit${
             revenueAttribution.attributedVisitCount === 1 ? '' : 's'
           } within 7 days of a reminder click. An estimate from click-to-visit timing, not perfect ground truth.`}

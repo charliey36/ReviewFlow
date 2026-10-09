@@ -3,6 +3,7 @@ import type { Database } from '@/lib/database.types';
 import { advanceJourneyEnrollment } from '@/lib/journeys';
 import { renderMessage } from '@/lib/templates';
 import { resolveChannel, sendMessage } from '@/lib/messaging';
+import { isDemoCustomer, simulateDemoEmailSend } from '@/lib/demo-mode';
 
 /**
  * Sends one queued review request immediately, using the same compliant
@@ -48,6 +49,7 @@ export async function sendQueuedReview(
   }
   
   console.log(`[Send Review] Customer found: ${customer.email}, Business: ${business.name}`);
+  console.log(`[Send Review] Customer found: ${customer.email}, Business: ${business.name}`);
 
   const channel = resolveChannel('email', customer);
   if (!channel) {
@@ -57,6 +59,13 @@ export async function sendQueuedReview(
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  
+  // Check if this is a demo account - if so, simulate the send for polished demo
+  const isDemo = isDemoCustomer(customer);
+  if (isDemo) {
+    console.log(`[Send Review] Demo customer detected: ${customer.email}`);
+  }
+  
   try {
     console.log(`[Send Review] Rendering message for channel: ${channel}`);
     const rendered = renderMessage('review_request', channel, {
@@ -69,21 +78,33 @@ export async function sendQueuedReview(
     });
     
     console.log(`[Send Review] Message rendered, subject: "${rendered.subject}"`);
-    console.log(`[Send Review] Sending via Resend to: ${customer.email}`);
     
-    await sendMessage(
-      {
-        channel,
-        to: { email: customer.email, phone: customer.phone ?? undefined },
+    if (isDemo) {
+      // For demo accounts, simulate the send instead of hitting Resend
+      // This makes demos look polished without "failed" errors on test data
+      console.log(`[Send Review] Sending to demo customer: ${customer.email}`);
+      await simulateDemoEmailSend({
+        email: customer.email!,
         subject: rendered.subject,
-        html: rendered.html,
-        text: rendered.text,
-        listUnsubscribeUrl: `${appUrl}/api/unsubscribe/${customer.id}`,
-      },
-      `${business.name} via ReviewFlow`
-    );
-    
-    console.log(`[Send Review] Resend accepted email, updating message status to sent`);
+        messageId,
+      });
+      console.log(`[Send Review] Demo send simulated, updating message status to sent`);
+    } else {
+      // For real customers, send via Resend
+      console.log(`[Send Review] Sending via Resend to: ${customer.email}`);
+      await sendMessage(
+        {
+          channel,
+          to: { email: customer.email, phone: customer.phone ?? undefined },
+          subject: rendered.subject,
+          html: rendered.html,
+          text: rendered.text,
+          listUnsubscribeUrl: `${appUrl}/api/unsubscribe/${customer.id}`,
+        },
+        `${business.name} via ReviewFlow`
+      );
+      console.log(`[Send Review] Resend accepted email, updating message status to sent`);
+    }
     
     await supabase
       .from('messages')

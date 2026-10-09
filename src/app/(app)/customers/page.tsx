@@ -7,18 +7,16 @@ import { Icon } from '@/components/ui/icons';
 import { AddCustomerPanel } from './add-customer-panel';
 import { CustomersTable, type CustomerRow } from './customers-table';
 import { SendHeldButton } from './review-row-actions';
+import { formatUKDate, formatUKDateTime } from '@/lib/uk-defaults';
 
 export const metadata: Metadata = { title: 'Customers' };
 
 function formatDate(value: string) {
-  return new Date(value).toLocaleDateString(undefined, { dateStyle: 'medium' });
+  return formatUKDate(new Date(value));
 }
 
 function formatDateTime(value: string) {
-  return new Date(value).toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
+  return formatUKDateTime(new Date(value));
 }
 
 export default async function CustomersPage({

@@ -96,7 +96,8 @@ alter table public.customers
   add column if not exists phone text,
   add column if not exists date_of_birth date,
   add column if not exists source text,
-  add column if not exists unsubscribed_sms_at timestamptz;
+  add column if not exists unsubscribed_sms_at timestamptz,
+  add column if not exists archived_at timestamptz;
 
 create index if not exists customers_business_id_idx on public.customers (business_id);
 

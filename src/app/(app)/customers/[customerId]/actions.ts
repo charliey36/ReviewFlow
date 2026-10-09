@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { requireBusiness } from '@/lib/business';
 import { scheduleReviewRequest, todayIso } from '@/lib/eligibility';
+import { extractReviewSchedulingLogic } from '@/lib/review-scheduling';
+import { sendManualReviewRequestFor, sendManualRebookingReminderFor } from '@/lib/manual-sends';
 
 export type LogVisitResult = { error?: string; success?: boolean };
 
@@ -24,17 +26,30 @@ export async function logVisit(
     return { error: 'Price must be a positive number.' };
   }
 
-  const { error } = await supabase.from('visits').insert({
-    business_id: business.id,
-    customer_id: customerId,
-    service_id: serviceId,
-    price,
-    notes,
-  });
+  const { data: visit, error } = await supabase
+    .from('visits')
+    .insert({
+      business_id: business.id,
+      customer_id: customerId,
+      service_id: serviceId,
+      price,
+      notes,
+    })
+    .select('id')
+    .single();
 
-  if (error) {
-    return { error: `Failed to log visit: ${error.message}` };
+  if (error || !visit) {
+    return { error: `Failed to log visit: ${error?.message ?? 'unknown error'}` };
   }
+
+  // A logged visit is a completed service — keep last_service_date in step so
+  // rebooking/review timing is based on the real most-recent service.
+  const serviceDate = todayIso();
+  await supabase
+    .from('customers')
+    .update({ last_service_date: serviceDate })
+    .eq('id', customerId)
+    .eq('business_id', business.id);
 
   // Award loyalty points for the visit if the program is active.
   const { data: program } = await supabase
@@ -53,7 +68,26 @@ export async function logVisit(
     });
   }
 
+  // Auto-schedule a review request using the same engine CSV import uses.
+  // Held by default (owner presses Send); duplicate protection is enforced
+  // inside the engine (per-customer and per-visit).
+  const { data: customer } = await supabase
+    .from('customers')
+    .select('unsubscribed_at')
+    .eq('id', customerId)
+    .eq('business_id', business.id)
+    .maybeSingle();
+
+  await extractReviewSchedulingLogic(supabase, business.id, customerId, {
+    visitId: visit.id,
+    serviceDate,
+    autoSend: false,
+    windowDays: business.review_request_window_days,
+    unsubscribedAt: customer?.unsubscribed_at ?? null,
+  });
+
   revalidatePath(`/customers/${customerId}`);
+  revalidatePath('/customers');
   return { success: true };
 }
 
@@ -98,4 +132,115 @@ export async function completeService(customerId: string): Promise<{ error?: str
   revalidatePath(`/customers/${customerId}`);
   revalidatePath('/customers');
   return {};
+}
+
+export type ManualActionResult = { error?: string; success?: boolean; message?: string };
+
+/** Owner-triggered: send a review request to this customer right now. */
+export async function sendManualReviewRequest(customerId: string): Promise<ManualActionResult> {
+  const business = await requireBusiness();
+  const supabase = createClient();
+
+  const res = await sendManualReviewRequestFor(supabase, business.id, customerId);
+
+  revalidatePath(`/customers/${customerId}`);
+  revalidatePath('/customers');
+  revalidatePath('/dashboard');
+
+  if (!res.ok) return { error: res.error ?? 'Could not send the review request.' };
+  return { success: true, message: 'Review request sent.' };
+}
+
+/** Owner-triggered: send a rebooking reminder to this customer right now. */
+export async function sendManualRebookingReminder(customerId: string): Promise<ManualActionResult> {
+  const business = await requireBusiness();
+  const supabase = createClient();
+
+  const res = await sendManualRebookingReminderFor(supabase, business.id, customerId);
+
+  revalidatePath(`/customers/${customerId}`);
+  revalidatePath('/customers');
+
+  if (!res.ok) return { error: res.error ?? 'Could not send the rebooking reminder.' };
+  return { success: true, message: 'Rebooking reminder sent.' };
+}
+
+/**
+ * Soft-archive this customer: hides them from the active list and cancels any
+ * still-queued/pending sends, without destroying their history. Reversible via
+ * `unarchiveCustomer`.
+ */
+export async function archiveCustomer(customerId: string): Promise<ManualActionResult> {
+  const business = await requireBusiness();
+  const supabase = createClient();
+
+  const { error } = await supabase
+    .from('customers')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', customerId)
+    .eq('business_id', business.id);
+
+  if (error) return { error: `Failed to archive customer: ${error.message}` };
+
+  // Stop anything still waiting to go out — an archived customer shouldn't
+  // receive further automated messages.
+  await supabase
+    .from('messages')
+    .update({ status: 'cancelled' })
+    .eq('business_id', business.id)
+    .eq('customer_id', customerId)
+    .in('status', ['queued', 'pending']);
+
+  revalidatePath('/customers');
+  revalidatePath(`/customers/${customerId}`);
+  return { success: true, message: 'Customer archived.' };
+}
+
+/** Restore a previously archived customer back to the active list. */
+export async function unarchiveCustomer(customerId: string): Promise<ManualActionResult> {
+  const business = await requireBusiness();
+  const supabase = createClient();
+
+  const { error } = await supabase
+    .from('customers')
+    .update({ archived_at: null })
+    .eq('id', customerId)
+    .eq('business_id', business.id);
+
+  if (error) return { error: `Failed to restore customer: ${error.message}` };
+
+  revalidatePath('/customers');
+  revalidatePath(`/customers/${customerId}`);
+  return { success: true, message: 'Customer restored.' };
+}
+
+/** Edit a customer's core contact details (name / email / phone). */
+export async function editCustomer(
+  customerId: string,
+  _prev: ManualActionResult,
+  formData: FormData
+): Promise<ManualActionResult> {
+  const business = await requireBusiness();
+  const supabase = createClient();
+
+  const name = String(formData.get('name') ?? '').trim();
+  const email = String(formData.get('email') ?? '').trim().toLowerCase();
+  const phoneRaw = String(formData.get('phone') ?? '').trim();
+
+  if (!name) return { error: 'Customer name is required.' };
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) return { error: 'Enter a valid email address.' };
+
+  const { error } = await supabase
+    .from('customers')
+    .update({ name, email, phone: phoneRaw || null })
+    .eq('id', customerId)
+    .eq('business_id', business.id);
+
+  if (error) return { error: `Failed to update customer: ${error.message}` };
+
+  revalidatePath('/customers');
+  revalidatePath(`/customers/${customerId}`);
+  return { success: true, message: 'Customer updated.' };
 }

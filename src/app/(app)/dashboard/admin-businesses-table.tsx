@@ -3,12 +3,10 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { DeleteOrganisationButton } from '../admin/organisations/delete-organisation-button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { formatUKDateTime } from '@/lib/uk-defaults';
 
 function formatDateTime(value: string) {
-  return new Date(value).toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
+  return formatUKDateTime(new Date(value));
 }
 
 /**

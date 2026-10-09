@@ -3,11 +3,12 @@ import { requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui/page-header';
 import { FeedbackList } from './feedback-list';
+import { formatUKDateTime } from '@/lib/uk-defaults';
 
 export const metadata: Metadata = { title: 'Feedback inbox' };
 
 function formatDateTime(value: string) {
-  return new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  return formatUKDateTime(new Date(value));
 }
 
 export default async function FeedbackInboxPage() {

@@ -13,11 +13,13 @@ import { Icon } from '@/components/ui/icons';
 import { LogVisitForm } from './log-visit-form';
 import { CompleteServiceButton } from './complete-service-button';
 import { TagEditor } from './tag-editor';
+import { CustomerActionsMenu } from '../customer-actions-menu';
+import { formatUKCurrency, formatUKDate } from '@/lib/uk-defaults';
 
 export const metadata: Metadata = { title: 'Customer' };
 
 function formatDate(value: string) {
-  return new Date(value).toLocaleDateString(undefined, { dateStyle: 'medium' });
+  return formatUKDate(new Date(value));
 }
 
 export default async function CustomerDetailPage({ params }: { params: { customerId: string } }) {
@@ -55,14 +57,30 @@ export default async function CustomerDetailPage({ params }: { params: { custome
     </Badge>
   ) : null;
 
+  const adornment = (
+    <span className="flex flex-wrap items-center gap-2">
+      {customer.archived_at && <Badge tone="neutral">Archived</Badge>}
+      {statusBadge}
+    </span>
+  );
+
   return (
     <div>
       <PageHeader
         back={{ href: '/customers', label: 'Customers' }}
         title={customer.name}
         leading={<Avatar name={customer.name} size="xl" />}
-        adornment={statusBadge}
-        actions={<CompleteServiceButton customerId={customer.id} lastServiceDate={customer.last_service_date} />}
+        adornment={adornment}
+        actions={
+          <div className="flex items-center gap-2">
+            <CompleteServiceButton customerId={customer.id} lastServiceDate={customer.last_service_date} />
+            <CustomerActionsMenu
+              customerId={customer.id}
+              customer={{ name: customer.name, email: customer.email, phone: customer.phone }}
+              isArchived={Boolean(customer.archived_at)}
+            />
+          </div>
+        }
         description={
           <span className="flex flex-wrap items-center gap-x-5 gap-y-1">
             <span className="inline-flex items-center gap-1.5">
@@ -83,7 +101,7 @@ export default async function CustomerDetailPage({ params }: { params: { custome
         <StatCard
           label="Lifetime value"
           tone="emerald"
-          value={`$${lifetimeValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          value={formatUKCurrency(lifetimeValue)}
           icon="chart"
           hint={`${visits.length} visit${visits.length === 1 ? '' : 's'} logged`}
         />
@@ -105,7 +123,7 @@ export default async function CustomerDetailPage({ params }: { params: { custome
         <StatCard
           label="Loyalty points"
           tone="amber"
-          value={loyaltyProgram?.is_active ? loyaltyBalance.toLocaleString('en-US') : '\u2014'}
+          value={loyaltyProgram?.is_active ? loyaltyBalance.toLocaleString('en-GB') : '\u2014'}
           icon="gift"
           hint={loyaltyProgram?.is_active ? 'Current balance' : 'Loyalty program is off'}
         />
@@ -113,8 +131,10 @@ export default async function CustomerDetailPage({ params }: { params: { custome
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <SectionCard title="Log a visit" description="Record a visit to update lifetime value, rebooking timing and loyalty points.">
-            <LogVisitForm customerId={customer.id} services={services ?? []} />
+          <SectionCard title="Log a visit" description="Record a visit to update lifetime value, rebooking timing and loyalty points." className="scroll-mt-24" >
+            <div id="log-visit">
+              <LogVisitForm customerId={customer.id} services={services ?? []} />
+            </div>
           </SectionCard>
 
           <SectionCard title="Visit history" flush>
@@ -139,7 +159,7 @@ export default async function CustomerDetailPage({ params }: { params: { custome
                             : 'General visit'}
                         </td>
                         <td className="text-right tabular-nums">
-                          {visit.price != null ? `$${visit.price.toFixed(2)}` : '\u2014'}
+                          {visit.price != null ? formatUKCurrency(visit.price) : '\u2014'}
                         </td>
                         <td className="text-ink-3">{visit.notes ?? '\u2014'}</td>
                       </tr>

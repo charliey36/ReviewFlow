@@ -52,7 +52,7 @@ export function AddServiceForm() {
           Default price
         </label>
         <div className="relative mt-1.5">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">$</span>
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-4">£</span>
           <input
             id="default_price"
             name="default_price"

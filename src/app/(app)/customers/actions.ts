@@ -6,6 +6,43 @@ import { requireBusiness } from '@/lib/business';
 import { sendQueuedReview } from '@/lib/review-queue';
 import { exitJourneyEnrollment } from '@/lib/journeys';
 import { parseServiceDate } from '@/lib/eligibility';
+import { sendManualReviewRequestFor, sendManualRebookingReminderFor } from '@/lib/manual-sends';
+
+export type ManualSendResult = { error?: string; success?: boolean; message?: string };
+
+/**
+ * Owner-triggered: send a review request to a customer right now. Thin wrapper
+ * over the shared manual-send engine (also used by the customer detail page
+ * actions and the POST /api/send-review-request endpoint) so every surface
+ * sends identically.
+ */
+export async function sendManualReviewRequest(customerId: string): Promise<ManualSendResult> {
+  const business = await requireBusiness();
+  const supabase = createClient();
+
+  const res = await sendManualReviewRequestFor(supabase, business.id, customerId);
+
+  revalidatePath('/customers');
+  revalidatePath(`/customers/${customerId}`);
+  revalidatePath('/dashboard');
+
+  if (!res.ok) return { error: res.error ?? 'Could not send the review request.' };
+  return { success: true, message: 'Review request sent.' };
+}
+
+/** Owner-triggered: send a rebooking reminder to a customer right now. */
+export async function sendManualRebookingReminder(customerId: string): Promise<ManualSendResult> {
+  const business = await requireBusiness();
+  const supabase = createClient();
+
+  const res = await sendManualRebookingReminderFor(supabase, business.id, customerId);
+
+  revalidatePath('/customers');
+  revalidatePath(`/customers/${customerId}`);
+
+  if (!res.ok) return { error: res.error ?? 'Could not send the rebooking reminder.' };
+  return { success: true, message: 'Rebooking reminder sent.' };
+}
 
 export type AddCustomerResult = { error?: string; success?: boolean };
 

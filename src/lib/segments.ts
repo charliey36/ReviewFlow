@@ -6,7 +6,7 @@
  *
  * Supported fields deliberately kept small (the set the spec's example
  * rule needs: "customers who haven't visited in 60+ days with lifetime
- * spend over $200") rather than a general-purpose query language, since a
+ * spend over £200") rather than a general-purpose query language, since a
  * full query builder is explicitly a "Could Have" / later-phase item.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
