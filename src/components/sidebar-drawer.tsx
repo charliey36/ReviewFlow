@@ -77,7 +77,7 @@ export function SidebarDrawer({
         } max-lg:shadow-pop`}
       >
         <div className="flex h-16 flex-shrink-0 items-center justify-between px-4">
-          <Link href="/dashboard" aria-label="ReviewFlow dashboard" className="rounded-lg">
+          <Link href="/dashboard" aria-label="Pentriq dashboard" className="rounded-lg">
             <Logo />
           </Link>
           <button

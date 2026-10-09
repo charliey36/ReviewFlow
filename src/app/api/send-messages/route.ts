@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { sendMessage, resolveChannel } from '@/lib/messaging';
 import { renderMessage } from '@/lib/templates';
 import { advanceJourneyEnrollment } from '@/lib/journeys';
+import { senderDisplayName } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
@@ -124,7 +125,7 @@ export async function GET(request: NextRequest) {
           text: rendered.text,
           listUnsubscribeUrl: unsubscribeUrl,
         },
-        `${business.name} via ReviewFlow`
+        senderDisplayName(business.name)
       );
 
       await supabase

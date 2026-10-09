@@ -116,10 +116,10 @@ Panel shows:
 - Button shows "Sending..." state
 - Success message appears: "Test email sent to your@email.com"
 - Email arrives in inbox within 30 seconds
-- Email subject: "ReviewFlow Email Configuration Test"
+- Email subject: "Pentriq Email Configuration Test"
 
 **Email Content Should Include:**
-- "ReviewFlow Email Configuration Test" heading
+- "Pentriq Email Configuration Test" heading
 - Sender address (onboarding@resend.dev or your domain)
 - Recipient address (your@email.com)
 - Timestamp
@@ -130,7 +130,7 @@ Panel shows:
 - [ ] Success message displays
 - [ ] Email arrives
 - [ ] Email contains correct information
-- [ ] From address shows "ReviewFlow Test" label
+- [ ] From address shows "Pentriq Test" label
 
 **If Failed:**
 - [ ] Check ADMIN_EMAIL in .env.local
@@ -317,7 +317,7 @@ Settings page shows:
 [Send Review] Message rendered, subject: "Your review request"
 [Send Review] Sending via Resend to: charlieyoults123@gmail.com
 [Email Send] Preparing to send email to charlieyoults123@gmail.com
-[Email Send] From: My Business via ReviewFlow <onboarding@resend.dev>
+[Email Send] From: My Business via Pentriq <onboarding@resend.dev>
 [Email Send] Subject: Your review request
 [Email Send] ✅ Email sent successfully to charlieyoults123@gmail.com
 [Send Review] Resend accepted email, updating message status to sent

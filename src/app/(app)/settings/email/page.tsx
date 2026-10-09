@@ -23,7 +23,7 @@ export default async function EmailSettingsPage() {
       <div className="space-y-6">
         <SectionCard
           title="Email Provider"
-          description="ReviewFlow uses Resend to send transactional emails to your customers."
+          description="Pentriq uses Resend to send transactional emails to your customers."
         >
           <EmailDiagnosticsPanel />
         </SectionCard>
@@ -66,7 +66,7 @@ export default async function EmailSettingsPage() {
                 </li>
                 <li>Click "Add Domain" and follow Resend's verification process</li>
                 <li>Once verified, update the EMAIL_FROM environment variable to use your domain</li>
-                <li>Restart ReviewFlow, and emails will begin sending in production mode</li>
+                <li>Restart Pentriq, and emails will begin sending in production mode</li>
               </ol>
             </div>
 

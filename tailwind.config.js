@@ -36,7 +36,7 @@ module.exports = {
         '2xs': ['0.6875rem', { lineHeight: '1rem' }],
       },
       colors: {
-        /* ReviewFlow green, tuned vivid: the same hue family as the original
+        /* Pentriq green, tuned vivid: the same hue family as the original
            brand, with enough saturation to read as an accent that pops. */
         brand: {
           50: '#ecfdf5',

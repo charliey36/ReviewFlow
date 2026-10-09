@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sendMessage } from '@/lib/messaging';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/business';
+import { APP_NAME } from '@/lib/brand';
 
 /**
  * POST /api/send-test-email
@@ -31,11 +32,11 @@ export async function POST(request: NextRequest) {
       {
         channel: 'email',
         to: { email: user.email },
-        subject: 'ReviewFlow Email Configuration Test',
+        subject: `${APP_NAME} Email Configuration Test`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px;">
-            <h2>ReviewFlow Email Configuration Test</h2>
-            <p>This is a test email sent from ReviewFlow.</p>
+            <h2>${APP_NAME} Email Configuration Test</h2>
+            <p>This is a test email sent from ${APP_NAME}.</p>
             
             <h3>Configuration Details:</h3>
             <ul>
@@ -49,13 +50,13 @@ export async function POST(request: NextRequest) {
             
             <hr style="margin: 30px 0;">
             <p style="font-size: 12px; color: #666;">
-              This is an automated test message from ReviewFlow. You received this because you are an administrator.
+              This is an automated test message from ${APP_NAME}. You received this because you are an administrator.
             </p>
           </div>
         `,
-        text: 'ReviewFlow Email Configuration Test - This is a test email sent from ReviewFlow to verify your email configuration is working correctly.',
+        text: `${APP_NAME} Email Configuration Test - This is a test email sent from ${APP_NAME} to verify your email configuration is working correctly.`,
       },
-      'ReviewFlow Test'
+      `${APP_NAME} Test`
     );
 
     console.log(`[Test Email] ✅ Test email sent successfully to ${user.email}`);

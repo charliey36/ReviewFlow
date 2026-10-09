@@ -65,7 +65,7 @@ When ready to send to real customers:
    ```bash
    EMAIL_FROM=noreply@yourcompany.com
    ```
-4. Restart ReviewFlow
+4. Restart Pentriq
 5. Try sending again - now works with all customer emails
 
 ### Scenario 3: Checking Email Delivery

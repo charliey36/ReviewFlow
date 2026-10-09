@@ -100,7 +100,7 @@ Bob Johnson,bob@example.com,Plumbing,2026-10-06
 Alice Brown,alice@example.com,Electrical,2026-10-05
 ```
 
-### Example 3: Standard ReviewFlow format
+### Example 3: Standard Pentriq format
 ```
 name,email,service,date
 Charlie Wilson,charlie@example.com,HVAC,2026-10-04

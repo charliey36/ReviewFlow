@@ -10,7 +10,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const DEMO_EMAIL = process.env.SEED_DEMO_EMAIL || 'demo@reviewflow.app';
+const DEMO_EMAIL = process.env.SEED_DEMO_EMAIL || 'demo@pentriq.app';
 const DEMO_PASSWORD = process.env.SEED_DEMO_PASSWORD || 'demo-password-123';
 const DEMO_BUSINESS_NAME = 'The Daily Grind Cafe';
 const DEMO_GOOGLE_REVIEW_URL = 'https://g.page/r/example-demo/review';

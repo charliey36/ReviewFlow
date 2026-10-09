@@ -31,6 +31,7 @@ import { sendQueuedReview } from '@/lib/review-queue';
 import { extractReviewSchedulingLogic, isDuplicateReviewRequest } from '@/lib/review-scheduling';
 import { isDemoCustomer, simulateDemoEmailSend } from '@/lib/demo-mode';
 import { todayIso } from '@/lib/eligibility';
+import { senderDisplayName } from '@/lib/brand';
 
 type Db = SupabaseClient<Database>;
 
@@ -184,7 +185,7 @@ export async function sendManualRebookingReminderFor(
           text: rendered.text,
           listUnsubscribeUrl: `${appUrl}/api/unsubscribe/${customer.id}`,
         },
-        `${business.name} via ReviewFlow`
+        senderDisplayName(business.name)
       );
     }
 

@@ -8,10 +8,10 @@ export default function PrivacyPage() {
     <LegalPage
       title="Privacy Policy"
       sections={[
-        { heading: 'Data we collect', body: ['When you create an account we collect your email address, business name and Google review link. We also record how you use ReviewFlow (for example emails sent and link clicks) to run the service.'] },
+        { heading: 'Data we collect', body: ['When you create an account we collect your email address, business name and Google review link. We also record how you use Pentriq (for example emails sent and link clicks) to run the service.'] },
         { heading: 'Customer information', body: ['You upload your own customers’ names, email addresses and phone numbers. You are the controller of that data and we process it on your behalf solely to send review requests and show you results. Every email includes an unsubscribe link, and unsubscribed customers are never contacted again. You must have a lawful basis to contact the customers you add.'] },
         { heading: 'Cookies', body: ['We use essential cookies to keep you signed in. See our Cookie Policy for details.'] },
-        { heading: 'Sharing and retention', body: ['We do not sell your data. We use trusted providers to run ReviewFlow (hosting, database, email delivery and, when enabled, payments). We keep your data while your account is active and delete it when your account is removed.'] },
+        { heading: 'Sharing and retention', body: ['We do not sell your data. We use trusted providers to run Pentriq (hosting, database, email delivery and, when enabled, payments). We keep your data while your account is active and delete it when your account is removed.'] },
         { heading: 'Your rights', body: ['You can ask us to access, correct or delete your data at any time.'] },
         { heading: 'Contact', body: [`Questions about privacy? Email ${CONTACT_EMAIL}.`] },
       ]}

@@ -5,10 +5,10 @@
  * Trustpilot, etc. — it receives a single `reviewLink` string. This module is
  * the seam for swapping destinations later:
  *
- *   - Today the send pipeline passes ReviewFlow's own click-tracking URL
+ *   - Today the send pipeline passes Pentriq's own click-tracking URL
  *     (/api/track-message/[id] or /api/track/[id]), which records the click
  *     and then redirects to the business's Google review URL.
- *   - To support Trustpilot / Facebook / a ReviewFlow-hosted review page, add
+ *   - To support Trustpilot / Facebook / a Pentriq-hosted review page, add
  *     the platform here, store the destination URL per business, and have the
  *     tracking endpoint redirect to it. The email markup does not change.
  *
@@ -17,10 +17,12 @@
  * configuration only.
  */
 
-export type ReviewPlatformId = 'reviewflow' | 'google' | 'trustpilot' | 'facebook' | 'custom';
+import { APP_NAME } from '@/lib/brand';
+
+export type ReviewPlatformId = 'pentriq' | 'google' | 'trustpilot' | 'facebook' | 'custom';
 
 export const REVIEW_PLATFORMS: Record<ReviewPlatformId, { label: string }> = {
-  reviewflow: { label: 'ReviewFlow' },
+  pentriq: { label: APP_NAME },
   google: { label: 'Google Reviews' },
   trustpilot: { label: 'Trustpilot' },
   facebook: { label: 'Facebook Reviews' },

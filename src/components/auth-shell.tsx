@@ -34,7 +34,7 @@ export function AuthShell({
           aria-hidden="true"
           className="pointer-events-none absolute -left-24 top-1/3 -z-10 h-80 w-80 rounded-full bg-brand-400/20 blur-[100px]"
         />
-        <Link href="/" aria-label="ReviewFlow home" className="w-fit rounded-md">
+        <Link href="/" aria-label="Pentriq home" className="w-fit rounded-md">
           <Logo />
         </Link>
 
@@ -50,7 +50,7 @@ export function AuthShell({
         </div>
 
         <div className="flex items-center justify-between text-xs text-ink-4">
-          <p>&copy; {new Date().getFullYear()} ReviewFlow</p>
+          <p>&copy; {new Date().getFullYear()} Pentriq</p>
           <LegalLinks />
         </div>
       </div>

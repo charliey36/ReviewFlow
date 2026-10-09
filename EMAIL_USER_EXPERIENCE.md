@@ -53,8 +53,8 @@ to add a custom domain.
 ```
 [Test Email] Sending test email to charlieyoults123@gmail.com
 [Email Send] Preparing to send email to charlieyoults123@gmail.com
-[Email Send] From: ReviewFlow Test <onboarding@resend.dev>
-[Email Send] Subject: ReviewFlow Email Configuration Test
+[Email Send] From: Pentriq Test <onboarding@resend.dev>
+[Email Send] Subject: Pentriq Email Configuration Test
 [Email Send] ✅ Email sent successfully to charlieyoults123@gmail.com
 [Test Email] ✅ Test email sent successfully to charlieyoults123@gmail.com
 ```
@@ -81,7 +81,7 @@ to add a custom domain.
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ Email Provider                                          │
-│ ReviewFlow uses Resend to send transactional emails    │
+│ Pentriq uses Resend to send transactional emails    │
 │                                                         │
 │ ┌──────────────────────────────────────────────────┐  │
 │ │ Email Provider Status                            │  │
@@ -159,15 +159,15 @@ Works for ANY customer email
 ### What the Test Email Contains
 
 ```
-From: ReviewFlow Test <onboarding@resend.dev>
+From: Pentriq Test <onboarding@resend.dev>
 To: charlieyoults123@gmail.com
-Subject: ReviewFlow Email Configuration Test
+Subject: Pentriq Email Configuration Test
 
 ────────────────────────────────────────
 
-ReviewFlow Email Configuration Test
+Pentriq Email Configuration Test
 
-This is a test email sent from ReviewFlow.
+This is a test email sent from Pentriq.
 
 Configuration Details:
 • Sent from: onboarding@resend.dev
@@ -179,7 +179,7 @@ If you received this email, your email provider
 (Resend) is configured correctly!
 
 ────────────────────────────────────────
-This is an automated test message from ReviewFlow.
+This is an automated test message from Pentriq.
 ```
 
 ---

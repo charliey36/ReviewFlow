@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import './globals.css';
 import { ThemeProvider, THEME_BOOTSTRAP_SCRIPT } from '@/components/theme-context';
 import { SpotlightProvider } from '@/components/spotlight';
+import { APP_DESCRIPTION, APP_NAME, APP_TITLE } from '@/lib/brand';
 
 /* Inter (variable, latin subset, SIL OFL) is self-hosted so there is no
    build-time or runtime request to Google Fonts. */
@@ -13,21 +14,23 @@ const inter = localFont({
   weight: '100 900',
 });
 
-const description =
-  'Automate review requests, rebooking reminders and customer retention for service businesses. Compliant by design, with a private feedback channel on every request.';
-
 export const metadata: Metadata = {
   title: {
-    default: 'ReviewFlow — Reviews, rebookings and referrals on autopilot',
-    template: '%s · ReviewFlow',
+    default: APP_TITLE,
+    template: `%s · ${APP_NAME}`,
   },
-  description,
-  applicationName: 'ReviewFlow',
+  description: APP_DESCRIPTION,
+  applicationName: APP_NAME,
   openGraph: {
-    title: 'ReviewFlow — Reviews, rebookings and referrals on autopilot',
-    description,
-    siteName: 'ReviewFlow',
+    title: APP_TITLE,
+    description: APP_DESCRIPTION,
+    siteName: APP_NAME,
     type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: APP_TITLE,
+    description: APP_DESCRIPTION,
   },
 };
 

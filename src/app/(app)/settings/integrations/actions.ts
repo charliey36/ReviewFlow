@@ -22,7 +22,7 @@ export async function testImport(): Promise<{ message: string }> {
     business.id,
     {
       customerName: 'Test Customer',
-      email: 'test@reviewflow.local',
+      email: 'test@pentriq.local',
       phone: '07000000000',
       amountSpent: 100,
       serviceDate: new Date().toISOString().slice(0, 10),

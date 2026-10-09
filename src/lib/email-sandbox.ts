@@ -7,6 +7,7 @@
  */
 
 import { Resend } from 'resend';
+import { APP_NAME } from '@/lib/brand';
 
 export interface ResendDiagnostics {
   connected: boolean;
@@ -76,9 +77,9 @@ export async function detectResendMode(
 
     // Try to send a test email
     const { error } = await resend.emails.send({
-      from: `ReviewFlow Test <${from}>`,
+      from: `${APP_NAME} Test <${from}>`,
       to: testEmail,
-      subject: 'ReviewFlow Email Configuration Test',
+      subject: `${APP_NAME} Email Configuration Test`,
       text: 'This is a test email to detect your Resend account configuration.',
       html: '<p>This is a test email to detect your Resend account configuration.</p>',
     });

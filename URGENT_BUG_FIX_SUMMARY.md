@@ -255,7 +255,7 @@ If a user encounters the visit_id error:
    ```sql
    alter table public.messages add column if not exists visit_id uuid references public.visits (id) on delete set null;
    ```
-4. Restart ReviewFlow app
+4. Restart Pentriq app
 5. Try importing CSV again
 
 ### Option 2: Supabase CLI

@@ -2,7 +2,7 @@
 
 ## Overview
 
-ReviewFlow now includes comprehensive email diagnostics, sandbox mode detection, and human-readable error messages for Resend sandbox restrictions.
+Pentriq now includes comprehensive email diagnostics, sandbox mode detection, and human-readable error messages for Resend sandbox restrictions.
 
 ## What Was Implemented
 
@@ -194,7 +194,7 @@ Display to user
    ```bash
    EMAIL_FROM=noreply@yourbusiness.com
    ```
-5. Restart ReviewFlow
+5. Restart Pentriq
 6. Dashboard will show "🚀 Production" mode
 7. Emails will now send to all customers, not just the sandbox recipient
 

@@ -306,7 +306,7 @@ describe('Scenario 2: Manual review send', () => {
 
   it('identifies demo/sandbox customers so sends are simulated, not delivered', () => {
     expect(isDemoEmail('demo-customer@example.com')).toBe(true);
-    expect(isDemoEmail('demo@reviewflow.app')).toBe(true);
+    expect(isDemoEmail('demo@pentriq.app')).toBe(true);
     expect(isDemoEmail('test@foo.io')).toBe(true);
     expect(isDemoCustomer({ email: 'real.person@gmail.com' })).toBe(false);
   });
@@ -361,13 +361,13 @@ describe('Scenario 3: Manual rebooking reminder', () => {
     const rendered = renderMessage('rebooking_reminder', 'email', {
       businessName: 'Sparkle Salon',
       customerName: 'Priya',
-      rebookingUrl: 'https://app.reviewflow.test/book/cust-1',
-      unsubscribeUrl: 'https://app.reviewflow.test/api/unsubscribe/cust-1',
+      rebookingUrl: 'https://app.pentriq.test/book/cust-1',
+      unsubscribeUrl: 'https://app.pentriq.test/api/unsubscribe/cust-1',
     });
 
     expect(rendered.text).toContain('Priya');
     expect(rendered.text).toContain('Sparkle Salon');
-    expect(rendered.text).toContain('https://app.reviewflow.test/book/cust-1');
+    expect(rendered.text).toContain('https://app.pentriq.test/book/cust-1');
     expect(rendered.subject && rendered.subject.length).toBeGreaterThan(0);
   });
 

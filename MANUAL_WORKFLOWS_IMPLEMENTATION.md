@@ -166,7 +166,7 @@ Actions
 **Verification:**
 - Component compiles with TypeScript strict mode ✅
 - Build includes in route manifest ✅
-- Follows existing ReviewFlow design patterns ✅
+- Follows existing Pentriq design patterns ✅
 
 ---
 
@@ -344,7 +344,7 @@ Total: 61 tests PASSED (3 pre-existing failures in import-flow.test.ts, unrelate
 4. **`src/app/(app)/customers/customer-actions-menu.tsx`** (new)
    - Actions dropdown menu component
    - Log Visit, Send Review, Send Reminder, Edit, Archive
-   - Matches ReviewFlow design system
+   - Matches Pentriq design system
 
 5. **`src/app/api/send-review-request/route.ts`** (new)
    - POST endpoint for manual review sends

@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 /**
- * PNG version of the ReviewFlow logo mark for use inside emails. Gmail and
+ * PNG version of the Pentriq logo mark for use inside emails. Gmail and
  * Outlook strip inline SVG and don't render external SVG, so the header logo
  * has to be a raster image. Rendered at 120px (3x of the 36–40px display
  * size) for crisp retina output. Public (no auth) — see middleware.ts.

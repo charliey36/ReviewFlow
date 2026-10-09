@@ -155,7 +155,7 @@ export default async function DashboardPage() {
   const newFeedback = newFeedbackCount.count ?? 0;
 
   // Click-through rate on sent emails. Note this measures clicks on the
-  // review link, not confirmed reviews left on Google - ReviewFlow has no
+  // review link, not confirmed reviews left on Google - Pentriq has no
   // way to read that back from Google today, so this is a conversion proxy,
   // not a true review-conversion rate.
   const clickRate = sent > 0 ? Math.round((clicks / sent) * 1000) / 10 : null;
@@ -268,7 +268,7 @@ export default async function DashboardPage() {
   const summary =
     sent > 0
       ? `${sent.toLocaleString('en-US')} review requests sent \u00b7 ${clickRate}% clicked through to your review page.`
-      : 'Add your first customer and ReviewFlow takes it from there \u2014 requests, reminders and tracking.';
+      : 'Add your first customer and Pentriq takes it from there \u2014 requests, reminders and tracking.';
 
   return (
     <div className="space-y-6">
@@ -352,7 +352,7 @@ export default async function DashboardPage() {
           <>
             {customerTotal === 0 && sent === 0 && (
               <div className="mb-4">
-                <h2 className="text-lg font-semibold text-ink">Welcome to ReviewFlow</h2>
+                <h2 className="text-lg font-semibold text-ink">Welcome to Pentriq</h2>
                 <p className="text-sm text-ink-3">Complete the onboarding steps below to get started.</p>
               </div>
             )}

@@ -1,3 +1,5 @@
+import { APP_NAME_ACCENT, APP_NAME_LEAD } from '@/lib/brand';
+
 const PlaneIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
@@ -39,7 +41,7 @@ export function Logo({ className = '', size = 'md' }: { className?: string; size
       <span
         className={`font-semibold tracking-[-0.02em] text-ink ${size === 'lg' ? 'text-xl' : 'text-[15px]'}`}
       >
-        Review<span className="text-brand-600 dark:text-brand-400">Flow</span>
+        {APP_NAME_LEAD}<span className="text-brand-600 dark:text-brand-400">{APP_NAME_ACCENT}</span>
       </span>
     </span>
   );
@@ -51,7 +53,7 @@ export function LogoOnDark({ className = '' }: { className?: string }) {
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       <LogoMark className="h-8 w-8 ring-white/20" />
       <span className="text-[15px] font-semibold tracking-[-0.02em] text-white">
-        Review<span className="text-brand-300">Flow</span>
+        {APP_NAME_LEAD}<span className="text-brand-300">{APP_NAME_ACCENT}</span>
       </span>
     </span>
   );

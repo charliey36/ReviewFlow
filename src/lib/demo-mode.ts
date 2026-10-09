@@ -10,7 +10,7 @@
  * Detect if an email is a demo/test account.
  * Demo accounts are typically used for seeding and testing:
  * - *.example.com addresses
- * - demo@reviewflow.app
+ * - demo@pentriq.app
  * - test@ addresses
  * - localhost emails
  */
@@ -21,7 +21,7 @@ export function isDemoEmail(email: string | null | undefined): boolean {
   
   return (
     lowerEmail.includes('@example.com') ||
-    lowerEmail === 'demo@reviewflow.app' ||
+    lowerEmail === 'demo@pentriq.app' ||
     lowerEmail.startsWith('test@') ||
     lowerEmail.endsWith('@localhost') ||
     lowerEmail.includes('demo') && lowerEmail.includes('@') ||

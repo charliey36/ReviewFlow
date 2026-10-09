@@ -1,6 +1,6 @@
 {
   "openapi": "3.0.3",
-  "info": { "title": "ReviewFlow Integrations API", "version": "1.0.0" },
+  "info": { "title": "Pentriq Integrations API", "version": "1.0.0" },
   "servers": [{ "url": "http://localhost:3000" }],
   "components": {
     "securitySchemes": { "ApiKey": { "type": "apiKey", "in": "header", "name": "x-api-key" } }

@@ -1,8 +1,9 @@
 import type { Business } from '@/lib/database.types';
+import { APP_NAME } from '@/lib/brand';
 
-/** The one and only ReviewFlow plan. Change the price here (and in Stripe) only. */
+/** The one and only Pentriq plan. Change the price here (and in Stripe) only. */
 export const PLAN = {
-  name: 'ReviewFlow',
+  name: APP_NAME,
   priceMonthly: 29,
   currency: '£',
   perks: [

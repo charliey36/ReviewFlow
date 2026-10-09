@@ -15,7 +15,7 @@ export function HeaderBrand() {
   return (
     <Link
       href="/dashboard"
-      aria-label="ReviewFlow dashboard"
+      aria-label="Pentriq dashboard"
       className={`rounded-md ${isOpen ? 'lg:hidden' : ''}`}
     >
       <Logo />

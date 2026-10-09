@@ -109,7 +109,7 @@ export default async function HowItWorksPage() {
           <h2 className="text-sm font-semibold text-ink">Compliant by design: why private feedback too?</h2>
           <p className="mt-1.5 max-w-3xl text-[13px] leading-6 text-ink-2">
             Every review request email and landing page shows both the public Google review link and a
-            private feedback option, to every customer, unconditionally. ReviewFlow never decides who
+            private feedback option, to every customer, unconditionally. Pentriq never decides who
             sees the public link based on how they might rate you &mdash; that kind of review gating is
             against Google&apos;s policies. The private option just gives unhappy customers a direct
             channel to you instead of a public review, which they can also choose any time regardless.

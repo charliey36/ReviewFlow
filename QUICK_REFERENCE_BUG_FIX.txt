@@ -55,7 +55,7 @@ USER INSTRUCTIONS (IF ERROR OCCURS)
 2. Paste and run:
    alter table public.messages add column if not exists visit_id uuid 
    references public.visits (id) on delete set null;
-3. Restart ReviewFlow
+3. Restart Pentriq
 4. Try CSV import again
 
 BUILD & TEST STATUS

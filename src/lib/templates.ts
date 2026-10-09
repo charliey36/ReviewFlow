@@ -3,6 +3,7 @@ import { assertCompliantReviewLinks } from '@/lib/compliance';
 import type { MessageChannel } from '@/lib/messaging';
 import type { Database } from '@/lib/database.types';
 import { renderReviewRequestEmail } from '@/lib/email-templates/review-request';
+import { APP_NAME } from '@/lib/brand';
 
 export type MessagePurpose = Database['public']['Tables']['messages']['Row']['purpose'];
 
@@ -32,7 +33,7 @@ function unsubscribeFooterHtml(businessName: string, unsubscribeUrl?: string): s
   const safeBusinessName = escapeHtml(businessName);
   return `
     <p style="font-size: 13px; color: #64748b; margin: 24px 0 8px;">
-      Sent by ${safeBusinessName} via ReviewFlow.
+      Sent by ${safeBusinessName} via ${APP_NAME}.
     </p>
     ${
       unsubscribeUrl

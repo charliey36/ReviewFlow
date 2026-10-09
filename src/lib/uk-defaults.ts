@@ -1,5 +1,5 @@
 /**
- * UK-first locale defaults for ReviewFlow.
+ * UK-first locale defaults for Pentriq.
  *
  * Centralises the three things that differ for a UK audience from the US
  * defaults the app was originally built with:

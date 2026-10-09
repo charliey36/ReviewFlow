@@ -61,7 +61,7 @@ const steps: { title: string; description: string; icon: IconName; tone: Tone }[
     tone: 'emerald',
   },
   {
-    title: 'ReviewFlow follows up',
+    title: 'Pentriq follows up',
     description:
       'Emails go out after the delay you choose, with reminders and automatic retries. No manual chasing.',
     icon: 'bolt',
@@ -119,7 +119,7 @@ export default async function HomePage() {
     <div className="min-h-screen overflow-x-clip">
       <header className="glass sticky top-0 z-30 border-b border-line/80">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" aria-label="ReviewFlow home" className="rounded-md">
+          <Link href="/" aria-label="Pentriq home" className="rounded-md">
             <Logo />
           </Link>
 
@@ -178,7 +178,7 @@ export default async function HomePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl animate-fade-in-up text-pretty text-base leading-7 text-ink-3 [animation-delay:120ms] sm:text-lg sm:leading-8">
-              ReviewFlow automatically asks for reviews, brings customers back for their next visit, and
+              Pentriq automatically asks for reviews, brings customers back for their next visit, and
               rewards loyalty &mdash; so your reputation and repeat revenue grow without the manual
               follow-up.
             </p>
@@ -313,7 +313,7 @@ export default async function HomePage() {
                   Built to keep you on the right side of the rules
                 </h2>
                 <p className="mt-4 text-pretty text-base leading-7 text-brand-100/80">
-                  Fake or gated reviews put your reputation at risk. ReviewFlow enforces compliant behavior in
+                  Fake or gated reviews put your reputation at risk. Pentriq enforces compliant behavior in
                   the product itself, not just in a policy page.
                 </p>
               </div>
@@ -351,7 +351,7 @@ export default async function HomePage() {
               Ready to put your follow-up on autopilot?
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-pretty text-base leading-7 text-emerald-50/80">
-              Create your account, add your Google review link, and add your first customer. ReviewFlow
+              Create your account, add your Google review link, and add your first customer. Pentriq
               takes it from there.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -376,7 +376,7 @@ export default async function HomePage() {
       <footer className="border-t border-line bg-surface/70 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6 lg:px-8">
           <Logo />
-          <p className="text-[13px] text-ink-3">&copy; {new Date().getFullYear()} ReviewFlow. All rights reserved.</p>
+          <p className="text-[13px] text-ink-3">&copy; {new Date().getFullYear()} Pentriq. All rights reserved.</p>
           <nav aria-label="Footer" className="flex items-center gap-5 text-[13px] font-medium text-ink-3">
             <Link href="/login" className="transition-colors hover:text-ink">
               Log in

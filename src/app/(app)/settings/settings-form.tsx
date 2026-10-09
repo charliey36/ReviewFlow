@@ -82,7 +82,7 @@ export function SettingsForm({ business }: { business: Business }) {
               className="mt-1 h-4 w-4 rounded border-line-strong" />
             <span>
               <span className="font-medium text-ink">Send rebooking reminders</span>
-              <span className="block text-[13px] text-ink-3">Untick if you do not want ReviewFlow to email customers asking them to book again.</span>
+              <span className="block text-[13px] text-ink-3">Untick if you do not want Pentriq to email customers asking them to book again.</span>
             </span>
           </label>
         </div>

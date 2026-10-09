@@ -22,7 +22,7 @@ describe('renderReviewRequestEmail', () => {
     expect(html).toContain('Leave a Review');
     expect(html).toContain('href="https://app.test/api/track-message/m1?x=1&amp;y=2"');
     expect(html).toContain('helps other customers make informed decisions');
-    expect(html).toContain('Sent via ReviewFlow');
+    expect(html).toContain('Sent via Pentriq');
     expect(html).toContain('Sent on behalf of');
     expect(html).toContain('https://app.test/email-assets/logo-mark.png');
   });

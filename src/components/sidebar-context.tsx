@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { LEGACY_STORAGE_KEYS, STORAGE_KEYS } from '@/lib/brand';
 
 type SidebarContextValue = {
   isOpen: boolean;
@@ -13,7 +14,7 @@ type SidebarContextValue = {
 
 const SidebarContext = createContext<SidebarContextValue | undefined>(undefined);
 
-const STORAGE_KEY = 'reviewflow-sidebar-open';
+const STORAGE_KEY = STORAGE_KEYS.sidebarOpen;
 const DESKTOP_QUERY = '(min-width: 1024px)';
 
 /**
@@ -33,7 +34,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       setIsOpen(false);
     } else {
       try {
-        const stored = window.localStorage.getItem(STORAGE_KEY);
+        const stored = window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_STORAGE_KEYS.sidebarOpen);
         if (stored === 'true' || stored === 'false') {
           setIsOpen(stored === 'true');
         }

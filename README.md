@@ -1,6 +1,6 @@
-# ReviewFlow
+# Pentriq
 
-ReviewFlow is a collaborative software project currently in development, designed to help service-based businesses automate customer reviews, retention and rebooking workflows.
+Pentriq is a collaborative software project currently in development, designed to help service-based businesses automate customer reviews, retention and rebooking workflows.
 
 Built with:
 
@@ -256,7 +256,7 @@ npm run seed
 Creates a demo business, its `business_members` row, and five sample
 customers (mix of pending/sent review requests, one already clicked).
 
-Demo login: `demo@reviewflow.app` / `demo-password-123` by default —
+Demo login: `demo@pentriq.app` / `demo-password-123` by default —
 override with `SEED_DEMO_EMAIL` / `SEED_DEMO_PASSWORD` env vars.
 
 ## 6. Scheduled jobs

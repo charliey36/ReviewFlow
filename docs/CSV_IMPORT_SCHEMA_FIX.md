@@ -90,7 +90,7 @@ If you encounter this error:
 3. Run the migrations in order:
    - `supabase/migrations/0011_review_queue.sql` (if not already run)
    - `supabase/migrations/0013_ensure_visit_id.sql` (defensive)
-4. Restart the ReviewFlow app
+4. Restart the Pentriq app
 5. Try importing the CSV again
 
 Or use the Supabase CLI:

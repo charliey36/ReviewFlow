@@ -54,7 +54,7 @@ export function PublicShell({
             {note}
           </span>
           <span aria-hidden="true">&middot;</span>
-          <span>Powered by ReviewFlow</span>
+          <span>Powered by Pentriq</span>
         </p>
       </div>
     </div>

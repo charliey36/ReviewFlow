@@ -4,6 +4,7 @@ import { advanceJourneyEnrollment } from '@/lib/journeys';
 import { renderMessage } from '@/lib/templates';
 import { resolveChannel, sendMessage } from '@/lib/messaging';
 import { isDemoCustomer, simulateDemoEmailSend } from '@/lib/demo-mode';
+import { senderDisplayName } from '@/lib/brand';
 
 /**
  * Sends one queued review request immediately, using the same compliant
@@ -101,7 +102,7 @@ export async function sendQueuedReview(
           text: rendered.text,
           listUnsubscribeUrl: `${appUrl}/api/unsubscribe/${customer.id}`,
         },
-        `${business.name} via ReviewFlow`
+        senderDisplayName(business.name)
       );
       console.log(`[Send Review] Resend accepted email, updating message status to sent`);
     }

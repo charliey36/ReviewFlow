@@ -1,5 +1,5 @@
 /**
- * ReviewFlow review-request email (initial request + reminder).
+ * Pentriq review-request email (initial request + reminder).
  *
  * Pure function: params in, { subject, html, text, preheader } out. No React,
  * no I/O — so the exact same output is used by the real send pipeline
@@ -27,6 +27,7 @@
  * independent of anything about the customer — see lib/compliance.ts.
  */
 import { escapeHtml } from '@/lib/html';
+import { APP_NAME, APP_NAME_ACCENT, APP_NAME_LEAD } from '@/lib/brand';
 import {
   REVIEW_PLATFORMS,
   isSafeHttpUrl,
@@ -252,7 +253,7 @@ export function renderReviewRequestEmail(params: ReviewEmailParams = {}): Render
     ? `<p class="rf-muted" style="margin:0 0 4px;font-size:13px;line-height:20px;color:${C.ink3};">${contact}</p>`
     : '';
   const footerReason = `<p class="rf-muted" style="margin:12px 0 0;font-size:12px;line-height:18px;color:${C.ink3};">You received this email because you are a customer of ${
-    hasBusiness ? escapeHtml(rawBusiness) : 'a business that uses ReviewFlow'
+    hasBusiness ? escapeHtml(rawBusiness) : `a business that uses ${APP_NAME}`
   }${/[.!?]$/.test(rawBusiness) && hasBusiness ? '' : '.'}${
     unsubscribeHref
       ? ` <a href="${escapeHtml(unsubscribeHref)}" class="rf-link" style="color:${C.brand700};text-decoration:underline;">Unsubscribe</a> from future review emails.`
@@ -312,7 +313,7 @@ export function renderReviewRequestEmail(params: ReviewEmailParams = {}): Render
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
                 <td width="40" valign="middle" style="width:40px;">${logoMarkHtml(logoSrc, 36)}</td>
-                <td valign="middle" style="padding-left:10px;font-family:${FONT};font-size:17px;line-height:24px;font-weight:600;letter-spacing:-0.02em;color:#ffffff;">Review<span style="color:${C.brand300};">Flow</span></td>
+                <td valign="middle" style="padding-left:10px;font-family:${FONT};font-size:17px;line-height:24px;font-weight:600;letter-spacing:-0.02em;color:#ffffff;">${APP_NAME_LEAD}<span style="color:${C.brand300};">${APP_NAME_ACCENT}</span></td>
                 <td align="right" valign="middle" style="font-family:${FONT};font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:${C.brand200};">${escapeHtml(copy.badge)}</td>
               </tr>
             </table>
@@ -374,7 +375,7 @@ ${
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;">
               <tr>
                 <td width="22" valign="middle" style="width:22px;">${logoMarkHtml(logoSrc, 20)}</td>
-                <td valign="middle" class="rf-ink" style="padding-left:8px;font-size:13px;line-height:20px;font-weight:600;letter-spacing:-0.01em;color:${C.ink};">Sent via ReviewFlow</td>
+                <td valign="middle" class="rf-ink" style="padding-left:8px;font-size:13px;line-height:20px;font-weight:600;letter-spacing:-0.01em;color:${C.ink};">Sent via ${APP_NAME}</td>
               </tr>
             </table>
             ${footerBusiness}
@@ -414,7 +415,7 @@ ${
       : '',
     '',
     '--',
-    `Sent via ReviewFlow${hasBusiness ? ` on behalf of ${rawBusiness}` : ''}`,
+    `Sent via ${APP_NAME}${hasBusiness ? ` on behalf of ${rawBusiness}` : ''}`,
     [clean(params.businessContact?.email), clean(params.businessContact?.phone), clean(params.businessContact?.website)]
       .filter(Boolean)
       .join(' · '),

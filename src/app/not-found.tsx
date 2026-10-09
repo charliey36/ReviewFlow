@@ -9,7 +9,7 @@ export default function NotFound() {
         className="bg-grid pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)]"
       />
       <div className="relative flex flex-col items-center">
-        <Link href="/" aria-label="ReviewFlow home">
+        <Link href="/" aria-label="Pentriq home">
           <Logo />
         </Link>
         <p className="mt-14 text-sm font-semibold text-brand-700 dark:text-brand-400">404</p>

@@ -2,7 +2,7 @@
 
 ## What Changed
 
-ReviewFlow now lets you manually manage customer journeys:
+Pentriq now lets you manually manage customer journeys:
 - ✅ Log visit → auto-schedule review
 - ✅ Send review on-demand
 - ✅ Send rebooking reminder on-demand

@@ -37,12 +37,12 @@ export default async function IntegrationsPage() {
         title="Integrations"
         icon="cog"
         tone="slate"
-        description="Let Zapier, Make or your CRM tell ReviewFlow when a service is completed."
+        description="Let Zapier, Make or your CRM tell Pentriq when a service is completed."
         tabs={<SettingsTabs />}
       />
       <div className="space-y-6">
         <SectionCard title="Endpoint" description="Customers are created or updated by email, and a service visit is recorded.">
-          <label className="label">ReviewFlow endpoint (POST)</label>
+          <label className="label">Pentriq endpoint (POST)</label>
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
             <code className="input flex-1 select-all overflow-x-auto font-mono text-sm">{endpoint}</code>
             <CopyButton value={endpoint} label="Copy endpoint" />
@@ -55,7 +55,7 @@ export default async function IntegrationsPage() {
 
         <SectionCard
           title="Zapier setup"
-          description={<>Google Sheets → Zapier → ReviewFlow. <Link href="/integrations/docs" className="underline">Full guide</Link></>}
+          description={<>Google Sheets → Zapier → Pentriq. <Link href="/integrations/docs" className="underline">Full guide</Link></>}
         >
           <ol className="list-decimal space-y-1.5 pl-5 text-sm text-ink-2">
             <li>Create a Google Sheet with columns: <code>Name, Email, Phone, AmountSpent, ServiceDate</code>.</li>

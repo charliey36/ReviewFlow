@@ -16,12 +16,12 @@ export default function IntegrationDocsPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="mx-auto w-full max-w-3xl px-4 py-6">
-        <Link href="/" aria-label="ReviewFlow home"><Logo /></Link>
+        <Link href="/" aria-label="Pentriq home"><Logo /></Link>
       </header>
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-16">
-        <h1 className="text-3xl font-semibold tracking-tight text-ink">Send service events to ReviewFlow</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-ink">Send service events to Pentriq</h1>
         <P>
-          When a job is completed in your booking tool, CRM or spreadsheet, send it to ReviewFlow. We create the
+          When a job is completed in your booking tool, CRM or spreadsheet, send it to Pentriq. We create the
           customer if they are new (matched by email), record the service visit and update their stats. Find your
           API key in Settings → Integrations.
         </P>
@@ -61,7 +61,7 @@ x-api-key: YOUR_API_KEY`}</Code>
 }`}</Code>
         <P>A missing or wrong API key returns 401.</P>
 
-        <H>Zapier: Google Sheets to ReviewFlow</H>
+        <H>Zapier: Google Sheets to Pentriq</H>
         <P>1. Create a Google Sheet with these columns in row 1:</P>
         <Code>{`Name | Email | Phone | AmountSpent | ServiceDate
 John Smith | john@email.com | 07123456789 | 350 | 2026-10-08`}</Code>
@@ -80,7 +80,7 @@ Headers:       x-api-key    → YOUR_API_KEY`}</Code>
       </main>
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-6">
-          <p className="text-[13px] text-ink-3">&copy; {new Date().getFullYear()} ReviewFlow</p>
+          <p className="text-[13px] text-ink-3">&copy; {new Date().getFullYear()} Pentriq</p>
           <LegalLinks />
         </div>
       </footer>

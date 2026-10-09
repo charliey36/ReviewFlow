@@ -15,7 +15,7 @@ export function LegalPage({
   return (
     <div className="flex min-h-screen flex-col">
       <header className="mx-auto w-full max-w-3xl px-4 py-6">
-        <Link href="/" aria-label="ReviewFlow home"><Logo /></Link>
+        <Link href="/" aria-label="Pentriq home"><Logo /></Link>
       </header>
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-16">
         <h1 className="text-3xl font-semibold tracking-tight text-ink">{title}</h1>
@@ -31,7 +31,7 @@ export function LegalPage({
       </main>
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-6">
-          <p className="text-[13px] text-ink-3">&copy; {new Date().getFullYear()} ReviewFlow</p>
+          <p className="text-[13px] text-ink-3">&copy; {new Date().getFullYear()} Pentriq</p>
           <LegalLinks />
         </div>
       </footer>

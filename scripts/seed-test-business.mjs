@@ -1,6 +1,6 @@
 // Seed script for a fully-populated TEST business — distinct from the
 // `npm run seed` demo business. Simulates a salon that has been using
-// ReviewFlow for ~6 months, with enough historical data to populate every
+// Pentriq for ~6 months, with enough historical data to populate every
 // section of the app: customers (active, lapsed, unsubscribed), services,
 // visit history, review requests + clicks, private feedback, segments,
 // loyalty program + ledger, referrals, and messages/journeys.

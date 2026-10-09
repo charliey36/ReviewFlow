@@ -2,7 +2,7 @@
 
 ## Overview
 
-Added demo mode to ReviewFlow so that when you click "Send Now" on demo/test accounts, it shows a successful send without actually hitting Resend. This makes demos look polished and professional.
+Added demo mode to Pentriq so that when you click "Send Now" on demo/test accounts, it shows a successful send without actually hitting Resend. This makes demos look polished and professional.
 
 ## What It Does
 
@@ -20,7 +20,7 @@ Real customers (after you add a proper domain) continue to send via Resend norma
 
 These emails are treated as demo accounts:
 - `*.example.com` (seed data)
-- `demo@reviewflow.app` (test account)
+- `demo@pentriq.app` (test account)
 - `test@*` (test accounts)
 - `*@localhost` (development)
 - Any email with "demo" or "test" in it
@@ -67,7 +67,7 @@ When you send to a demo account:
 
 ## For Your Demos
 
-Now when you demo ReviewFlow:
+Now when you demo Pentriq:
 - ✅ Click "Send Now" on any seeded customer
 - ✅ Shows "sent" status immediately
 - ✅ Looks polished and professional

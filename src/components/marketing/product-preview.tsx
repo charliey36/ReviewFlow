@@ -1,4 +1,5 @@
 import { LogoMark } from '@/components/logo';
+import { APP_NAME_ACCENT, APP_NAME_LEAD } from '@/lib/brand';
 import { areaFromLine, smoothLinePath, type Point } from '@/lib/chart';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { Sparkline } from '@/components/ui/sparkline';
@@ -73,7 +74,7 @@ export function ProductPreview({ className = '' }: { className?: string }) {
         </span>
         <span className="mx-auto flex h-6 w-full max-w-[220px] items-center justify-center gap-1.5 rounded-md bg-surface-muted text-2xs font-medium text-ink-3">
           <Icon name="lock" className="h-3 w-3" />
-          ReviewFlow &middot; Dashboard
+          Pentriq &middot; Dashboard
         </span>
         <span className="w-10" />
       </div>
@@ -84,7 +85,7 @@ export function ProductPreview({ className = '' }: { className?: string }) {
           <div className="flex items-center gap-2 px-1.5 pb-3 pt-1">
             <LogoMark className="h-6 w-6" />
             <span className="text-[13px] font-semibold tracking-[-0.02em] text-ink">
-              Review<span className="text-brand-600 dark:text-brand-400">Flow</span>
+              {APP_NAME_LEAD}<span className="text-brand-600 dark:text-brand-400">{APP_NAME_ACCENT}</span>
             </span>
           </div>
           <ul className="space-y-1">

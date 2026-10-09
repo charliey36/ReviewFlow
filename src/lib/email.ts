@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { renderReviewRequestEmail } from '@/lib/email-templates/review-request';
+import { APP_NAME, senderDisplayName } from '@/lib/brand';
 
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
@@ -55,7 +56,7 @@ export async function sendReviewRequestEmail(params: {
   const { subject, html, text } = buildReviewRequestEmail(params);
 
   const { error } = await resend.emails.send({
-    from: `${params.businessName} via ReviewFlow <${from}>`,
+    from: `${senderDisplayName(params.businessName)} <${from}>`,
     to: params.to,
     subject,
     html,
@@ -80,7 +81,7 @@ export type NotificationKind = 'welcome' | 'campaign' | 'trial_ending';
 
 function layout(body: string) {
   return `<div style="font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;color:#0f172a">
-<p style="font-size:18px;font-weight:700;color:#188038;margin:0 0 24px">ReviewFlow</p>${body}
+<p style="font-size:18px;font-weight:700;color:#188038;margin:0 0 24px">${APP_NAME}</p>${body}
 <p style="font-size:13px;color:#64748b;margin-top:32px">Questions? Just reply to this email.</p></div>`;
 }
 
@@ -93,7 +94,7 @@ export function buildNotificationEmail(kind: NotificationKind, businessName: str
   switch (kind) {
     case 'welcome':
       return {
-        subject: 'Welcome to ReviewFlow',
+        subject: `Welcome to ${APP_NAME}`,
         html: layout(`<p>Welcome, ${name}!</p><p>Add your Google review link and your first customer and we'll send your first review request.</p>${button(`${app}/dashboard`, 'Get started')}`),
       };
     case 'campaign':
@@ -103,7 +104,7 @@ export function buildNotificationEmail(kind: NotificationKind, businessName: str
       };
     case 'trial_ending':
       return {
-        subject: 'Your ReviewFlow trial ends soon',
+        subject: `Your ${APP_NAME} trial ends soon`,
         html: layout(`<p>Your free trial for ${name} ends in a few days.</p><p>Subscribe to keep sending review requests.</p>${button(`${app}/settings/billing`, 'Subscribe')}`),
       };
   }
@@ -116,6 +117,6 @@ export async function sendNotificationEmail(to: string, kind: NotificationKind, 
     return;
   }
   const from = process.env.EMAIL_FROM || 'onboarding@resend.dev';
-  const { error } = await getResendClient().emails.send({ from: `ReviewFlow <${from}>`, to, subject, html });
+  const { error } = await getResendClient().emails.send({ from: `${APP_NAME} <${from}>`, to, subject, html });
   if (error) throw new Error(typeof error === 'string' ? error : error.message);
 }

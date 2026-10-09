@@ -1,4 +1,4 @@
--- ReviewFlow schema — full platform migration.
+-- Pentriq schema — full platform migration.
 -- Adds team support, service/visit history, generalized multi-channel
 -- messaging + journeys, compliant private feedback, segmentation, loyalty,
 -- and referrals on top of the original MVP tables. Additive only — nothing

@@ -62,7 +62,7 @@ Jane Smith,jane@gmail.com,Leak Repair,2026-10-08`}</pre>
           <p className="mt-2">
             Dates can be 2026-10-08 or 08/10/2026. Optional columns: <code className="font-mono">phone</code>,{' '}
             <code className="font-mono">amount</code>. Rows with the same email, service and date are skipped, so it is safe to upload a file twice.{' '}
-            <a href="/reviewflow-customer-template.csv" download className="font-medium text-brand-700 underline dark:text-brand-300">
+            <a href="/pentriq-customer-template.csv" download className="font-medium text-brand-700 underline dark:text-brand-300">
               Download sample CSV
             </a>
           </p>

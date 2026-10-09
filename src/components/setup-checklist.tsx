@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Icon } from '@/components/ui/icons';
+import { LEGACY_STORAGE_KEYS, STORAGE_KEYS } from '@/lib/brand';
 import { ProgressRing } from '@/components/ui/progress-ring';
 
 export type SetupStep = {
@@ -13,7 +14,7 @@ export type SetupStep = {
   done: boolean;
 };
 
-const STORAGE_KEY = 'reviewflow-setup-dismissed';
+const STORAGE_KEY = STORAGE_KEYS.setupDismissed;
 
 /**
  * First-run checklist. While steps remain it shows a progress ring and
@@ -30,7 +31,9 @@ export function SetupChecklist({ steps }: { steps: SetupStep[] }) {
   const [dismissed, setDismissed] = useState<boolean | null>(null);
   useEffect(() => {
     try {
-      setDismissed(window.localStorage.getItem(STORAGE_KEY) === 'true');
+      setDismissed(
+        (window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_STORAGE_KEYS.setupDismissed)) === 'true'
+      );
     } catch {
       setDismissed(false);
     }
@@ -53,7 +56,7 @@ export function SetupChecklist({ steps }: { steps: SetupStep[] }) {
           <div className="min-w-0 flex-1">
             <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink">You&apos;re all set</h2>
             <p className="mt-1 max-w-xl text-sm leading-6 text-ink-3">
-              Your review link is live and customers are flowing in. ReviewFlow will send requests, follow up and
+              Your review link is live and customers are flowing in. Pentriq will send requests, follow up and
               track results automatically from here.
             </p>
           </div>
