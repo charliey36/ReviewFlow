@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Icon } from '@/components/ui/icons';
-import { LEGACY_STORAGE_KEYS, STORAGE_KEYS } from '@/lib/brand';
+import { STORAGE_KEYS } from '@/lib/brand';
 import { ProgressRing } from '@/components/ui/progress-ring';
 
 export type SetupStep = {
@@ -31,9 +31,7 @@ export function SetupChecklist({ steps }: { steps: SetupStep[] }) {
   const [dismissed, setDismissed] = useState<boolean | null>(null);
   useEffect(() => {
     try {
-      setDismissed(
-        (window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_STORAGE_KEYS.setupDismissed)) === 'true'
-      );
+      setDismissed(window.localStorage.getItem(STORAGE_KEY) === 'true');
     } catch {
       setDismissed(false);
     }

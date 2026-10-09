@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { LEGACY_STORAGE_KEYS, STORAGE_KEYS } from '@/lib/brand';
+import { STORAGE_KEYS } from '@/lib/brand';
 
 type SidebarContextValue = {
   isOpen: boolean;
@@ -34,7 +34,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       setIsOpen(false);
     } else {
       try {
-        const stored = window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_STORAGE_KEYS.sidebarOpen);
+        const stored = window.localStorage.getItem(STORAGE_KEY);
         if (stored === 'true' || stored === 'false') {
           setIsOpen(stored === 'true');
         }

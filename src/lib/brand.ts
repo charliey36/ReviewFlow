@@ -35,16 +35,6 @@ export const STORAGE_KEYS = {
   setupDismissed: `${APP_SLUG}-setup-dismissed`,
 } as const;
 
-/**
- * Keys used before the rename. Read as a fallback so users keep their theme /
- * sidebar / "setup dismissed" preference instead of being reset.
- */
-export const LEGACY_STORAGE_KEYS = {
-  theme: 'pentriq-theme',
-  sidebarOpen: 'pentriq-sidebar-open',
-  setupDismissed: 'pentriq-setup-dismissed',
-} as const;
-
 /** "{business} via Pentriq" — the display name on outgoing customer emails. */
 export function senderDisplayName(businessName: string): string {
   return `${businessName} via ${APP_NAME}`;

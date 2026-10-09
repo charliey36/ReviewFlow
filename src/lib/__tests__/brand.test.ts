@@ -20,13 +20,10 @@ import { buildNotificationEmail } from '../email';
 const ROOT = join(__dirname, '..', '..', '..');
 const OLD_NAME = /review[\s_-]?flow/i;
 
-/**
- * Places the old name may legitimately remain:
- *  - brand.ts: LEGACY_STORAGE_KEYS (preserves users' saved preferences)
- *  - this test file
- */
-const ALLOWED = new Set(['src/lib/brand.ts', 'src/lib/__tests__/brand.test.ts']);
-const SCAN_DIRS = ['src', 'public', 'scripts'];
+/** No allowances: the old name must not appear anywhere in these locations. */
+const ALLOWED = new Set<string>();
+const SCAN_DIRS = ['src', 'public', 'scripts', 'docs', 'supabase'];
+const ROOT_DOC = /\.(md|txt)$/;
 const TEXT_EXT = /\.(ts|tsx|js|mjs|json|svg|csv|css|md|txt)$/;
 
 function walk(dir: string, out: string[] = []): string[] {
@@ -85,17 +82,18 @@ describe('rendered output carries the Pentriq name', () => {
 });
 
 describe('no remaining references to the old product name', () => {
-  it('src, public and scripts are clean (except documented allowances)', () => {
+  it('source, docs, migrations and root markdown are clean', () => {
     const offenders: string[] = [];
-    for (const dir of SCAN_DIRS) {
-      for (const file of walk(join(ROOT, dir))) {
-        const rel = relative(ROOT, file);
-        if (ALLOWED.has(rel)) continue;
-        const lines = readFileSync(file, 'utf8').split('\n');
-        lines.forEach((line, i) => {
+    const rootDocs = readdirSync(ROOT).filter((f) => ROOT_DOC.test(f)).map((f) => join(ROOT, f));
+    const files = [...SCAN_DIRS.flatMap((dir) => walk(join(ROOT, dir))), ...rootDocs];
+    for (const file of files) {
+      const rel = relative(ROOT, file);
+      if (ALLOWED.has(rel)) continue;
+      readFileSync(file, 'utf8')
+        .split('\n')
+        .forEach((line, i) => {
           if (OLD_NAME.test(line)) offenders.push(`${rel}:${i + 1}: ${line.trim().slice(0, 100)}`);
         });
-      }
     }
     expect(offenders).toEqual([]);
   });

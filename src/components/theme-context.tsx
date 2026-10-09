@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { LEGACY_STORAGE_KEYS, STORAGE_KEYS } from '@/lib/brand';
+import { STORAGE_KEYS } from '@/lib/brand';
 
 type Theme = 'light' | 'dark';
 
@@ -78,7 +78,7 @@ export const THEME_BOOTSTRAP_SCRIPT = `
 (function () {
   var theme = 'dark';
   try {
-    var stored = localStorage.getItem('${STORAGE_KEY}') || localStorage.getItem('${LEGACY_STORAGE_KEYS.theme}');
+    var stored = localStorage.getItem('${STORAGE_KEY}');
     if (stored === 'light' || stored === 'dark') theme = stored;
   } catch (e) {}
   if (theme === 'dark') document.documentElement.classList.add('dark');
