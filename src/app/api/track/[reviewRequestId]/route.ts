@@ -1,25 +1,27 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isValidReviewUrl, reviewUnavailableUrl } from '@/lib/review-destination';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Public click-tracking endpoint linked from review request emails.
- * Records a click_event for the given review_request, then redirects the
+ * Records a click_event for the given review_request, then HTTP-redirects the
  * visitor to the business's real Google review URL. Runs with the admin
  * client since the visitor clicking this link has no Supabase auth session.
+ * Unknown links or a missing review URL go to the branded
+ * /review-unavailable page rather than a raw 404.
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: { reviewRequestId: string } }
 ) {
   const { reviewRequestId } = params;
-  const fallbackUrl = new URL('/', request.url);
 
   const uuidPattern =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidPattern.test(reviewRequestId)) {
-    return NextResponse.redirect(fallbackUrl);
+    return NextResponse.redirect(reviewUnavailableUrl(request.url, 'invalid-link'));
   }
 
   const supabase = createAdminClient();
@@ -31,7 +33,7 @@ export async function GET(
     .maybeSingle();
 
   if (!reviewRequest) {
-    return NextResponse.redirect(fallbackUrl);
+    return NextResponse.redirect(reviewUnavailableUrl(request.url, 'invalid-link'));
   }
 
   const { data: business } = await supabase
@@ -47,9 +49,10 @@ export async function GET(
     review_request_id: reviewRequest.id,
   });
 
-  const destination = business?.google_review_url;
-  const isValidDestination =
-    typeof destination === 'string' && /^https?:\/\//i.test(destination);
+  const destination = business?.google_review_url?.trim();
+  if (!isValidReviewUrl(destination)) {
+    return NextResponse.redirect(reviewUnavailableUrl(request.url, 'not-configured'));
+  }
 
-  return NextResponse.redirect(isValidDestination ? destination : fallbackUrl);
+  return NextResponse.redirect(destination, 302);
 }
