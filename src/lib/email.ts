@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { renderReviewRequestEmail } from '@/lib/email-templates/review-request';
 
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
@@ -18,11 +19,12 @@ function escapeHtml(value: string) {
 }
 
 /**
- * Builds the review request email HTML. `trackingUrl` points at our own
+ * Builds the legacy-flow review request email. `trackingUrl` points at our own
  * /api/track/[reviewRequestId] endpoint, which records the click and then
  * redirects to the business's real Google review URL. `unsubscribeUrl`
  * points at /api/unsubscribe/[customerId] so every send includes a working
- * opt-out link, as required by CAN-SPAM.
+ * opt-out link, as required by CAN-SPAM. The layout is shared with the
+ * generalized messages flow (lib/email-templates/review-request.ts).
  */
 export function buildReviewRequestEmail(params: {
   businessName: string;
@@ -31,37 +33,13 @@ export function buildReviewRequestEmail(params: {
   unsubscribeUrl: string;
 }) {
   const { businessName, customerName, trackingUrl, unsubscribeUrl } = params;
-  const safeBusinessName = escapeHtml(businessName);
-  const safeCustomerName = escapeHtml(customerName);
-
-  const subject = `How was your visit to ${businessName}?`;
-
-  const html = `
-    <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #0f172a;">
-      <p style="font-size: 16px; margin: 0 0 16px;">Hi ${safeCustomerName},</p>
-      <p style="font-size: 16px; line-height: 1.5; margin: 0 0 24px;">
-        Thanks for visiting ${safeBusinessName}. We'd love your feedback.
-      </p>
-      <div style="text-align: center; margin: 32px 0;">
-        <a
-          href="${trackingUrl}"
-          style="background-color: #188038; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 15px; font-weight: 600; display: inline-block;"
-        >
-          Leave a review
-        </a>
-      </div>
-      <p style="font-size: 13px; color: #64748b; margin: 0 0 8px;">
-        Sent by ${safeBusinessName} via ReviewFlow.
-      </p>
-      <p style="font-size: 13px; color: #94a3b8; margin: 0;">
-        <a href="${unsubscribeUrl}" style="color: #94a3b8; text-decoration: underline;">Unsubscribe</a>
-        from future review request emails.
-      </p>
-    </div>
-  `;
-
-  const text = `Hi ${customerName},\n\nThanks for visiting ${businessName}. We'd love your feedback.\n\nLeave a review: ${trackingUrl}\n\nSent by ${businessName} via ReviewFlow.\n\nUnsubscribe from future review request emails: ${unsubscribeUrl}`;
-
+  const { subject, html, text } = renderReviewRequestEmail({
+    variant: 'request',
+    businessName,
+    customerName,
+    reviewLink: trackingUrl,
+    unsubscribeUrl,
+  });
   return { subject, html, text };
 }
 

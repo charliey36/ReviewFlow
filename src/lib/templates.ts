@@ -2,6 +2,7 @@ import { escapeHtml } from '@/lib/html';
 import { assertCompliantReviewLinks } from '@/lib/compliance';
 import type { MessageChannel } from '@/lib/messaging';
 import type { Database } from '@/lib/database.types';
+import { renderReviewRequestEmail } from '@/lib/email-templates/review-request';
 
 export type MessagePurpose = Database['public']['Tables']['messages']['Row']['purpose'];
 
@@ -71,52 +72,24 @@ export function renderMessage(
       });
 
       const isReminder = purpose === 'review_reminder';
-      const subject = isReminder
-        ? `Quick reminder — how was your visit to ${ctx.businessName}?`
-        : `How was your visit to ${ctx.businessName}?`;
 
       const intro = isReminder
         ? `Just a quick reminder — we'd still love to hear about your visit to ${business}.`
         : `Thanks for visiting ${business}. We'd love your feedback.`;
 
       if (channel === 'email') {
-        const reviewButton = ctx.publicReviewUrl
-          ? `<div style="text-align: center; margin: 32px 0;">
-              <a href="${ctx.publicReviewUrl}" style="background-color: #188038; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 15px; font-weight: 600; display: inline-block;">
-                Leave a review
-              </a>
-            </div>`
-          : '';
-
-        const feedbackLink = `<p style="text-align: center; font-size: 14px; margin: 8px 0 0;">
-            <a href="${ctx.privateFeedbackUrl}" style="color: #475569; text-decoration: underline;">
-              Had an issue? Share private feedback instead
-            </a>
-          </p>`;
-
-        const html = wrapEmailHtml(
-          `<p style="font-size: 16px; margin: 0 0 16px;">Hi ${name},</p>
-           <p style="font-size: 16px; line-height: 1.5; margin: 0 0 8px;">${intro}</p>
-           ${reviewButton}
-           ${feedbackLink}`,
-          unsubscribeFooterHtml(ctx.businessName, ctx.unsubscribeUrl)
-        );
-
-        const text = [
-          `Hi ${ctx.customerName},`,
-          '',
-          intro,
-          '',
-          ctx.publicReviewUrl ? `Leave a review: ${ctx.publicReviewUrl}` : '',
-          `Had an issue? Share private feedback: ${ctx.privateFeedbackUrl}`,
-          '',
-          `Sent by ${ctx.businessName} via ReviewFlow.`,
-          ctx.unsubscribeUrl ? `Unsubscribe: ${ctx.unsubscribeUrl}` : '',
-        ]
-          .filter(Boolean)
-          .join('\n');
-
-        return { subject, html, text };
+        // Branded, responsive layout lives in lib/email-templates. Both the
+        // public review link (when configured) and the private feedback link
+        // are passed through unconditionally.
+        const email = renderReviewRequestEmail({
+          variant: isReminder ? 'reminder' : 'request',
+          customerName: ctx.customerName,
+          businessName: ctx.businessName,
+          reviewLink: ctx.publicReviewUrl,
+          privateFeedbackUrl: ctx.privateFeedbackUrl,
+          unsubscribeUrl: ctx.unsubscribeUrl,
+        });
+        return { subject: email.subject, html: email.html, text: email.text };
       }
 
       // SMS/WhatsApp: short, link-forward, same dual-link requirement.

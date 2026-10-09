@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { requireBusiness } from '@/lib/business';
 import { PageHeader } from '@/components/ui/page-header';
 import { SectionCard } from '@/components/ui/section-card';
@@ -25,6 +26,21 @@ export default async function EmailSettingsPage() {
           description="ReviewFlow uses Resend to send transactional emails to your customers."
         >
           <EmailDiagnosticsPanel />
+        </SectionCard>
+
+        <SectionCard
+          title="Review email design"
+          description="Preview the branded review request and reminder emails exactly as customers will see them, on desktop and mobile."
+          action={
+            <Link href="/settings/email/preview" className="btn btn-secondary btn-sm">
+              Preview emails
+            </Link>
+          }
+        >
+          <p className="text-sm text-ink-3">
+            Try different customer names, business names and review links, or simulate missing values to
+            check the fallbacks.
+          </p>
         </SectionCard>
 
         <SectionCard

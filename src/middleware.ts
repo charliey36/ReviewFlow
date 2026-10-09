@@ -48,6 +48,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/send-messages') ||
     pathname.startsWith('/api/scan-customer-lifecycle') ||
     pathname.startsWith('/api/ai-test') ||
+    pathname.startsWith('/email-assets/') ||
     pathname.startsWith('/auth/callback');
   const isPublicPage = pathname.startsWith('/feedback/') || pathname.startsWith('/book/') || pathname.startsWith('/r/') || ['/privacy', '/terms', '/cookies', '/ai-test'].includes(pathname);
 
