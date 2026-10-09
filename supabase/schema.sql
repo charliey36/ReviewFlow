@@ -173,7 +173,7 @@ create table if not exists public.messages (
   channel text not null default 'email' check (channel in ('email', 'sms', 'whatsapp')),
   journey_enrollment_id uuid,
   sequence_step integer not null default 1,
-  status text not null default 'pending' check (status in ('pending', 'sent', 'failed', 'cancelled')),
+  status text not null default 'pending' check (status in ('queued', 'pending', 'sent', 'failed', 'cancelled')),
   send_at timestamptz not null,
   sent_at timestamptz,
   attempts integer not null default 0,
@@ -181,6 +181,7 @@ create table if not exists public.messages (
   next_attempt_at timestamptz,
   last_error text,
   metadata jsonb not null default '{}'::jsonb,
+  visit_id uuid references public.visits (id) on delete set null,
   created_at timestamptz not null default now()
 );
 

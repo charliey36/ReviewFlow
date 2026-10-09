@@ -34,7 +34,7 @@ export async function importCustomers(
 
   const content = await file.text();
   const parsedRows = parseCsv(content);
-  const { rows, error: mapError } = mapCsvRowsToCustomers(parsedRows);
+  const { rows, error: mapError, warning: mapWarning } = mapCsvRowsToCustomers(parsedRows);
 
   if (mapError) {
     return { error: mapError };
@@ -50,14 +50,26 @@ export async function importCustomers(
 
   let summary: BulkImportSummary;
   try {
+    console.log('[CSV Import] Starting import process');
     summary = await bulkImportCustomers(
       supabase,
       { id: business.id, delay_hours: business.delay_hours, review_request_window_days: business.review_request_window_days ?? 14 },
       rows,
       formData.get('auto_send') === 'on'
     );
+    if (mapWarning) {
+      summary.warning = mapWarning;
+    }
   } catch (e) {
-    return { error: `Import failed: ${e instanceof Error ? e.message : 'unknown error'}. Nothing is lost: upload the file again and already-imported rows are skipped.` };
+    const error = e instanceof Error ? e : new Error(String(e));
+    
+    // DO NOT MASK THE ERROR - LOG THE ACTUAL EXCEPTION
+    console.error('❌ CSV IMPORT FAILED - ACTUAL ERROR:', error.message);
+    console.error('Stack trace:', error.stack);
+    console.error('Full error object:', JSON.stringify(e, Object.getOwnPropertyNames(e)));
+    
+    // Re-throw the actual error message to the user
+    return { error: `Import failed: ${error.message}` };
   }
 
   revalidatePath('/customers');

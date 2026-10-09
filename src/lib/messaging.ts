@@ -18,6 +18,7 @@
  */
 import { Resend } from 'resend';
 import { escapeHtml } from '@/lib/html';
+import { transformResendError } from '@/lib/email-sandbox';
 
 export type MessageChannel = 'email' | 'sms' | 'whatsapp';
 
@@ -47,6 +48,10 @@ async function sendEmail(params: SendMessageParams, fromLabel: string) {
 
   const resend = getResendClient();
   const from = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+  
+  console.log(`[Email Send] Preparing to send email to ${params.to.email}`);
+  console.log(`[Email Send] From: ${fromLabel} <${from}>`);
+  console.log(`[Email Send] Subject: ${params.subject}`);
 
   const { error } = await resend.emails.send({
     from: `${fromLabel} <${from}>`,
@@ -60,8 +65,15 @@ async function sendEmail(params: SendMessageParams, fromLabel: string) {
   });
 
   if (error) {
-    throw new MessageSendError(typeof error === 'string' ? error : error.message);
+    const errorMsg = typeof error === 'string' ? error : error.message;
+    console.error(`[Email Send] ❌ Resend error:`, error);
+    
+    // Transform sandbox errors into human-readable messages
+    const humanError = transformResendError(errorMsg);
+    throw new MessageSendError(humanError);
   }
+  
+  console.log(`[Email Send] ✅ Email sent successfully to ${params.to.email}`);
 }
 
 /**

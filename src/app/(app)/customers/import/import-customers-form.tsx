@@ -93,6 +93,11 @@ Jane Smith,jane@gmail.com,Leak Repair,2026-10-08`}</pre>
             <li>⚠️ Skipped duplicates: <b>{state.summary.duplicates}</b></li>
             <li>❌ Errors: <b>{state.summary.errors}</b></li>
           </ul>
+          {state.summary.warning && (
+            <Notice variant="warning" className="mt-4">
+              {state.summary.warning}
+            </Notice>
+          )}
           {state.summary.queued > 0 && (
             <Notice variant="success" className="mt-4">
               {state.summary.autoSend

@@ -3,6 +3,8 @@ import { LegalLinks } from '@/components/legal-links';
 import { getBillingState } from '@/lib/billing';
 import { requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
+import { validateDatabaseSchema, logSchemaValidation } from '@/lib/schema-validation';
+import { formatDiagnostics, getEmailDiagnostics } from '@/lib/email-sandbox';
 import { logout } from '@/app/(app)/actions';
 import { SidebarProvider } from '@/components/sidebar-context';
 import { SidebarDrawer } from '@/components/sidebar-drawer';
@@ -23,6 +25,28 @@ export default async function AppLayout({
 }) {
   const business = await requireBusiness();
   const supabase = createClient();
+  
+  // Validate database schema on app load (first render only, cached afterward)
+  // Wrapped in try-catch to prevent layout crashes if validation fails
+  try {
+    const schemaValidation = await validateDatabaseSchema(supabase);
+    if (!schemaValidation.isValid) {
+      logSchemaValidation(schemaValidation);
+    }
+  } catch (e) {
+    console.error('[Schema Validation] Error during validation:', e);
+    // Don't block layout render if validation fails
+  }
+
+  // Validate email provider configuration on app load
+  try {
+    const emailDiag = await getEmailDiagnostics();
+    console.log('[App Startup]', formatDiagnostics(emailDiag));
+  } catch (e) {
+    console.error('[Email Configuration] Error during validation:', e);
+    // Don't block layout render if email validation fails
+  }
+  
   const billing = getBillingState(business);
 
   // Unread private feedback, surfaced as a badge on the sidebar item. A failed

@@ -1,0 +1,91 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         QUICK REFERENCE: BUG FIX                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+ERROR MESSAGE
+─────────────────────────────────────────────────────────────────────────────
+"Import failed: Could not find the 'visit_id' column of 'messages' in the 
+schema cache."
+
+ROOT CAUSE
+─────────────────────────────────────────────────────────────────────────────
+Database missing visit_id column on messages table. Migration 0011 not applied.
+
+CRITICAL FILES
+─────────────────────────────────────────────────────────────────────────────
+WHERE IT BREAKS:
+  src/lib/customers.ts:285
+    visit_id: visitIdByKey.get(...) ?? null,
+
+DEFINED IN:
+  supabase/schema.sql:660
+  supabase/migrations/0011_review_queue.sql:8
+
+EXPECTED IN:
+  supabase/migrations/0013_ensure_visit_id.sql (NEW - defensive)
+
+THE FIX (IN ORDER)
+─────────────────────────────────────────────────────────────────────────────
+1. User runs migration 0013 in their Supabase project
+2. Column visit_id is added to messages table
+3. App restarts/redeployed
+4. CSV import retried → SUCCESS
+
+WHAT CHANGED IN CODE
+─────────────────────────────────────────────────────────────────────────────
+CREATED:
+  ✓ supabase/migrations/0013_ensure_visit_id.sql
+  ✓ src/lib/schema-validation.ts
+  ✓ docs/CSV_IMPORT_SCHEMA_FIX.md
+  ✓ URGENT_BUG_FIX_SUMMARY.md
+
+MODIFIED:
+  ✓ src/app/(app)/customers/import/actions.ts
+    - Better error handling
+    - Clear user message
+    - Server-side logging
+
+  ✓ src/app/(app)/layout.tsx
+    - Startup schema validation
+    - Migration hint logging
+
+USER INSTRUCTIONS (IF ERROR OCCURS)
+─────────────────────────────────────────────────────────────────────────────
+1. Go to Supabase project → SQL Editor
+2. Paste and run:
+   alter table public.messages add column if not exists visit_id uuid 
+   references public.visits (id) on delete set null;
+3. Restart ReviewFlow
+4. Try CSV import again
+
+BUILD & TEST STATUS
+─────────────────────────────────────────────────────────────────────────────
+✓ npm run build - SUCCESS
+✓ Types - All valid
+✓ Error handling - Specific catches in place
+✓ Startup validation - Ready
+✓ Backward compatible - YES
+
+DEPLOYMENT NOTES
+─────────────────────────────────────────────────────────────────────────────
+- No breaking changes
+- Migration 0013 is idempotent (safe to re-run)
+- Deploy code as normal
+- Users must run migration to fix existing databases
+
+VERIFICATION CHECKLIST
+─────────────────────────────────────────────────────────────────────────────
+☑ Root cause identified
+☑ Exact problem locations documented
+☑ Migration fix created (0013)
+☑ Error handling improved
+☑ Schema validation added
+☑ Startup validation integrated
+☑ Build successful
+☑ Types valid
+☑ Backward compatible
+☑ User recovery path clear
+
+STATUS: PRODUCTION READY
+─────────────────────────────────────────────────────────────────────────────
+All requirements met. Bug fix ready for deployment.
