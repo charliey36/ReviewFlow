@@ -186,6 +186,16 @@ create table if not exists public.messages (
   created_at timestamptz not null default now()
 );
 
+-- Per-send click tracking (migration 0018): unguessable token for the emailed
+-- /r/{token} link plus click counters.
+alter table public.messages
+  add column if not exists tracking_token text not null default replace(gen_random_uuid()::text, '-', ''),
+  add column if not exists click_count integer not null default 0,
+  add column if not exists first_clicked_at timestamptz,
+  add column if not exists last_clicked_at timestamptz,
+  add column if not exists destination_url text;
+create unique index if not exists messages_tracking_token_key on public.messages (tracking_token);
+
 create index if not exists messages_business_id_idx on public.messages (business_id);
 create index if not exists messages_status_send_at_idx on public.messages (status, send_at);
 create index if not exists messages_status_next_attempt_idx on public.messages (status, next_attempt_at);
@@ -201,10 +211,23 @@ create table if not exists public.interaction_events (
   business_id uuid not null references public.businesses (id) on delete cascade,
   message_id uuid references public.messages (id) on delete cascade,
   customer_id uuid references public.customers (id) on delete cascade,
-  event_type text not null check (event_type in ('click', 'review_confirmed', 'feedback_submitted')),
+  event_type text not null check (event_type in ('click', 'review_confirmed', 'feedback_submitted', 'review_link_clicked', 'review_link_scan')),
   occurred_at timestamptz not null default now(),
   metadata jsonb not null default '{}'::jsonb
 );
+
+-- Click-tracking detail (see supabase/migrations/0018_review_link_click_tracking.sql).
+-- review_link_clicked = counted human click; review_link_scan = automated hit
+-- (kept for audit, never counted); 'click' = historical rows.
+alter table public.interaction_events drop constraint if exists interaction_events_event_type_check;
+alter table public.interaction_events add constraint interaction_events_event_type_check
+  check (event_type in ('click', 'review_confirmed', 'feedback_submitted', 'review_link_clicked', 'review_link_scan'));
+alter table public.interaction_events
+  add column if not exists review_request_id uuid,
+  add column if not exists campaign_id uuid,
+  add column if not exists user_agent text,
+  add column if not exists ip_address text,
+  add column if not exists destination_url text;
 
 create index if not exists interaction_events_business_id_idx on public.interaction_events (business_id, event_type, occurred_at);
 create index if not exists interaction_events_message_id_idx on public.interaction_events (message_id);

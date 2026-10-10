@@ -5,6 +5,7 @@ import { renderMessage } from '@/lib/templates';
 import { resolveChannel, sendMessage } from '@/lib/messaging';
 import { isDemoCustomer, simulateDemoEmailSend } from '@/lib/demo-mode';
 import { senderDisplayName, getAppUrl } from '@/lib/brand';
+import { buildTrackingUrl } from '@/lib/click-tracking';
 
 /**
  * Sends one queued review request immediately, using the same compliant
@@ -72,7 +73,7 @@ export async function sendQueuedReview(
     const rendered = renderMessage('review_request', channel, {
       businessName: business.name,
       customerName: customer.name,
-      publicReviewUrl: business.google_review_url ? `${appUrl}/api/track-message/${message.id}` : undefined,
+      publicReviewUrl: business.google_review_url ? buildTrackingUrl(appUrl, message, { source: 'review-queue', kind: 'message' }) : undefined,
       privateFeedbackUrl: `${appUrl}/feedback/${message.id}`,
       unsubscribeUrl: `${appUrl}/api/unsubscribe/${customer.id}`,
       rebookingUrl: `${appUrl}/book/${customer.id}`,

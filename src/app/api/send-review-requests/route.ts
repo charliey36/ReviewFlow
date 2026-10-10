@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { notifyOwner } from '@/lib/notifications';
 import { sendReviewRequestEmail } from '@/lib/email';
 import { getAppUrl } from '@/lib/brand';
+import { buildTrackingUrl } from '@/lib/click-tracking';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
   // (next_attempt_at has passed).
   const { data: dueRequests, error } = await supabase
     .from('review_requests')
-    .select('id, business_id, customer_id, send_at, attempts, max_attempts')
+    .select('*')
     .eq('status', 'pending')
     .lte('send_at', nowIso)
     .or(`next_attempt_at.is.null,next_attempt_at.lte.${nowIso}`)
@@ -118,7 +119,7 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      const trackingUrl = `${appUrl}/api/track/${reviewRequest.id}`;
+      const trackingUrl = buildTrackingUrl(appUrl, reviewRequest, { source: 'send-review-requests', kind: 'review_request' });
       const unsubscribeUrl = `${appUrl}/api/unsubscribe/${reviewRequest.customer_id}`;
 
       await sendReviewRequestEmail({

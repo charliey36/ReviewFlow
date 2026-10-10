@@ -6,7 +6,7 @@
  * the seam for swapping destinations later:
  *
  *   - Today the send pipeline passes Pentriq's own click-tracking URL
- *     (/api/track-message/[id] or /api/track/[id]), which records the click
+ *     (/r/[token], or the legacy /api/track-message/[id] and /api/track/[id]), which records the click
  *     and then redirects to the business's Google review URL.
  *   - To support Trustpilot / Facebook / a Pentriq-hosted review page, add
  *     the platform here, store the destination URL per business, and have the

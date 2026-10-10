@@ -1,3 +1,16 @@
+/**
+ * `review_link_clicked` = counted (human) click on an emailed review link
+ * (REVIEW_LINK_CLICKED). `review_link_scan` = automated hit (email security
+ * scanner / link preview / bot), stored for audit and never counted.
+ * `click` = historical rows written before migration 0018.
+ */
+export type InteractionEventType =
+  | 'click'
+  | 'review_confirmed'
+  | 'feedback_submitted'
+  | 'review_link_clicked'
+  | 'review_link_scan';
+
 export type Database = {
   public: {
     Tables: {
@@ -245,6 +258,11 @@ export type Database = {
           last_error: string | null;
           metadata: Record<string, unknown>;
           created_at: string;
+          tracking_token: string;
+          click_count: number;
+          first_clicked_at: string | null;
+          last_clicked_at: string | null;
+          destination_url: string | null;
         };
         Insert: {
           id?: string;
@@ -273,6 +291,10 @@ export type Database = {
           max_attempts?: number;
           next_attempt_at?: string | null;
           last_error?: string | null;
+          click_count?: number;
+          first_clicked_at?: string | null;
+          last_clicked_at?: string | null;
+          destination_url?: string | null;
         };
         Relationships: [];
       };
@@ -282,18 +304,28 @@ export type Database = {
           business_id: string;
           message_id: string | null;
           customer_id: string | null;
-          event_type: 'click' | 'review_confirmed' | 'feedback_submitted';
+          event_type: InteractionEventType;
           occurred_at: string;
           metadata: Record<string, unknown>;
+          review_request_id: string | null;
+          campaign_id: string | null;
+          user_agent: string | null;
+          ip_address: string | null;
+          destination_url: string | null;
         };
         Insert: {
           id?: string;
           business_id: string;
           message_id?: string | null;
           customer_id?: string | null;
-          event_type: 'click' | 'review_confirmed' | 'feedback_submitted';
+          event_type: InteractionEventType;
           occurred_at?: string;
           metadata?: Record<string, unknown>;
+          review_request_id?: string | null;
+          campaign_id?: string | null;
+          user_agent?: string | null;
+          ip_address?: string | null;
+          destination_url?: string | null;
         };
         Update: Record<string, never>;
         Relationships: [];
@@ -511,6 +543,11 @@ export type Database = {
           next_attempt_at: string | null;
           last_error: string | null;
           created_at: string;
+          tracking_token: string;
+          click_count: number;
+          first_clicked_at: string | null;
+          last_clicked_at: string | null;
+          destination_url: string | null;
         };
         Insert: {
           id?: string;
@@ -531,6 +568,10 @@ export type Database = {
           max_attempts?: number;
           next_attempt_at?: string | null;
           last_error?: string | null;
+          click_count?: number;
+          first_clicked_at?: string | null;
+          last_clicked_at?: string | null;
+          destination_url?: string | null;
         };
         Relationships: [
           {

@@ -21,7 +21,7 @@ function escapeHtml(value: string) {
 
 /**
  * Builds the legacy-flow review request email. `trackingUrl` points at our own
- * /api/track/[reviewRequestId] endpoint, which records the click and then
+ * /r/{tracking_token} endpoint, which records the click and then
  * redirects to the business's real Google review URL. `unsubscribeUrl`
  * points at /api/unsubscribe/[customerId] so every send includes a working
  * opt-out link, as required by CAN-SPAM. The layout is shared with the

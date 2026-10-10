@@ -13,7 +13,7 @@ export function AddCustomerForm({ autoFocus = false }: { autoFocus?: boolean }) 
     addCustomer,
     {}
   );
-  useActionToast(state, { title: 'Customer added', description: 'No email is sent until you press Complete Service.' });
+  useActionToast(state, { title: 'Customer added', description: 'No email is sent until you log their first visit.' });
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {

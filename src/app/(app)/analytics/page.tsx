@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
 import { computeRebookingRate, computeRevenueAttribution, computeHealthScore } from '@/lib/health';
+import { getCampaignPerformance, getRecentClicks, getReviewLinkTotals } from '@/lib/click-analytics';
+import { formatUKDateTime } from '@/lib/uk-defaults';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { SectionCard } from '@/components/ui/section-card';
@@ -22,10 +24,13 @@ export default async function AnalyticsPage() {
   const business = await requireBusiness();
   const supabase = createClient();
 
-  const [{ data: visits }, { data: customers }, { data: services }] = await Promise.all([
+  const [{ data: visits }, { data: customers }, { data: services }, linkTotals, campaigns, recentClicks] = await Promise.all([
     supabase.from('visits').select('*').eq('business_id', business.id),
     supabase.from('customers').select('id').eq('business_id', business.id),
     supabase.from('services').select('id, recurrence_interval_days').eq('business_id', business.id),
+    getReviewLinkTotals(supabase, business.id),
+    getCampaignPerformance(supabase, business.id),
+    getRecentClicks(supabase, business.id, 10),
   ]);
 
   const rebookingRate = computeRebookingRate(visits ?? []);
@@ -51,9 +56,115 @@ export default async function AnalyticsPage() {
         title="Analytics"
         icon="chart"
         tone="emerald"
-        description="Rebooking rate, revenue influenced by automated messages, and customer health distribution."
+        description="Review link clicks, rebooking rate, revenue influenced by automated messages, and customer health distribution."
       />
 
+      <div className="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Review link clicks"
+          tone="violet"
+          icon="cursor"
+          value={<CountUp value={linkTotals.clicks} />}
+          hint={
+            linkTotals.clicks === 0
+              ? 'Clicks appear once customers open your review link'
+              : `${linkTotals.uniqueClicked.toLocaleString('en-GB')} email${linkTotals.uniqueClicked === 1 ? '' : 's'} clicked at least once. Bots and email scanners are excluded.`
+          }
+        />
+        <StatCard
+          label="Click-through rate"
+          tone="amber"
+          icon="chart"
+          value={
+            linkTotals.clickThroughRate === null ? (
+              '\u2014'
+            ) : (
+              <CountUp value={linkTotals.clickThroughRate} decimals={1} suffix="%" />
+            )
+          }
+          hint={
+            linkTotals.delivered > 0
+              ? `${linkTotals.clicks.toLocaleString('en-GB')} clicks \u00f7 ${linkTotals.delivered.toLocaleString('en-GB')} delivered emails`
+              : 'Needs at least one sent request'
+          }
+        />
+        <StatCard
+          label="Emails delivered"
+          tone="sky"
+          icon="mail"
+          value={<CountUp value={linkTotals.delivered} />}
+          hint="Accepted by the email provider. Opens and bounces aren't tracked."
+        />
+        <StatCard
+          label="Reviews received"
+          tone="emerald"
+          icon="star"
+          value={<CountUp value={linkTotals.reviewsReceived} />}
+          hint="Reviews confirmed in Pentriq. Google reviews can't be read back automatically."
+        />
+      </div>
+
+      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <SectionCard
+          className="lg:col-span-2"
+          title="Campaign performance"
+          description="Sent emails and clicks for each step of your review sequence."
+          flush
+        >
+          {campaigns.length === 0 ? (
+            <EmptyState
+              icon="mail"
+              title="No review emails sent yet"
+              description="Performance by campaign step appears once requests go out."
+              className="py-10"
+            />
+          ) : (
+            <div className="scroll-thin overflow-x-auto">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Campaign</th>
+                    <th className="text-right">Sent</th>
+                    <th className="text-right">Clicked</th>
+                    <th className="text-right">Total clicks</th>
+                    <th className="text-right">CTR</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {campaigns.map((row) => (
+                    <tr key={row.key}>
+                      <td className="font-medium text-ink">{row.label}</td>
+                      <td className="text-right tabular-nums">{row.sent.toLocaleString('en-GB')}</td>
+                      <td className="text-right tabular-nums">{row.clicked.toLocaleString('en-GB')}</td>
+                      <td className="text-right tabular-nums">{row.totalClicks.toLocaleString('en-GB')}</td>
+                      <td className="text-right tabular-nums">
+                        {row.clickThroughRate === null ? '\u2014' : `${row.clickThroughRate}%`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </SectionCard>
+
+        <SectionCard title="Recent clicks" description="Latest customers to open your review link.">
+          {recentClicks.length === 0 ? (
+            <EmptyState icon="cursor" title="No clicks yet" description="Clicks show up here as they happen." className="py-6" />
+          ) : (
+            <ul className="divide-y divide-line/70">
+              {recentClicks.map((click) => (
+                <li key={click.id} className="flex items-center justify-between gap-3 py-2.5 text-[13px]">
+                  <span className="min-w-0 truncate font-medium text-ink">{click.customerName ?? 'Customer'}</span>
+                  <time dateTime={click.occurredAt} className="flex-shrink-0 text-ink-3 tabular-nums">
+                    {formatUKDateTime(new Date(click.occurredAt))}
+                  </time>
+                </li>
+              ))}
+            </ul>
+          )}
+        </SectionCard>
+      </div>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <StatCard
           label="30-day rebooking rate"

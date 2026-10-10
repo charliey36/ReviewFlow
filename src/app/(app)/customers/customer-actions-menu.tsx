@@ -12,6 +12,7 @@ import {
   archiveCustomer,
   unarchiveCustomer,
   editCustomer,
+  resetServiceDate,
   type ManualActionResult,
 } from './[customerId]/actions';
 
@@ -30,6 +31,7 @@ type MenuItem = {
  *   - Log visit                 (scrolls to the inline log-visit form)
  *   - Send review               (manual review request, sent now)
  *   - Send rebooking reminder   (manual reminder, sent now)
+ *   - Reset service date        (admin: sets last service date to today, nothing else)
  *   - Edit                      (opens an inline edit dialog)
  *   - Archive / Restore         (soft-archive; destructive -> confirm dialog)
  *
@@ -102,6 +104,12 @@ export function CustomerActionsMenu({
       label: 'Send rebooking reminder',
       icon: 'refresh',
       onSelect: () => runAction(() => sendManualRebookingReminder(customerId), 'Could not send reminder'),
+    },
+    {
+      key: 'reset-service-date',
+      label: 'Reset service date',
+      icon: 'calendar',
+      onSelect: () => runAction(() => resetServiceDate(customerId), 'Could not reset service date'),
     },
     { key: 'edit', label: 'Edit', icon: 'cog', onSelect: () => setEditing(true) },
     isArchived

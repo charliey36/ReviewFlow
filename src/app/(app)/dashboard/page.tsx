@@ -4,6 +4,15 @@ import { redirect } from 'next/navigation';
 import { getAuthUser, isAdminEmail, requireBusiness } from '@/lib/business';
 import { createClient } from '@/lib/supabase/server';
 import { bucketDaily, splitPeriods } from '@/lib/trends';
+import {
+  REVIEW_PURPOSES,
+  computeClickThroughRate,
+  countCountedClicks,
+  countReviewsReceived,
+  countUniqueClicked,
+  deliveredFromSent,
+  getClickTimestamps,
+} from '@/lib/click-analytics';
 import { StatCard, type StatTrend } from '@/components/ui/stat-card';
 import { SectionCard } from '@/components/ui/section-card';
 import { Badge, requestStatusTone } from '@/components/ui/badge';
@@ -71,7 +80,9 @@ export default async function DashboardPage() {
     recentCustomers,
     newCustomerRows,
     sentRows,
-    clickRows,
+    clickTimestamps,
+    uniqueClicked,
+    reviewsReceived,
   ] = await Promise.all([
     supabase
       .from('customers')
@@ -82,10 +93,7 @@ export default async function DashboardPage() {
       .select('id', { count: 'exact', head: true })
       .eq('business_id', business.id)
       .eq('status', 'sent'),
-    supabase
-      .from('click_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('business_id', business.id),
+    countCountedClicks(supabase, business.id),
     supabase
       .from('review_requests')
       .select('id', { count: 'exact', head: true })
@@ -122,13 +130,9 @@ export default async function DashboardPage() {
       .gte('sent_at', sinceIso)
       .order('sent_at', { ascending: false })
       .limit(ROW_CAP),
-    supabase
-      .from('click_events')
-      .select('clicked_at')
-      .eq('business_id', business.id)
-      .gte('clicked_at', sinceIso)
-      .order('clicked_at', { ascending: false })
-      .limit(ROW_CAP),
+    getClickTimestamps(supabase, business.id, sinceIso, ROW_CAP),
+    countUniqueClicked(supabase, business.id),
+    countReviewsReceived(supabase, business.id),
   ]);
 
   const hasReviewUrl = Boolean(business.google_review_url);
@@ -143,25 +147,25 @@ export default async function DashboardPage() {
         .from('messages')
         .select('id', { count: 'exact', head: true })
         .eq('business_id', business.id)
-        .eq('purpose', 'review_request')
+        .in('purpose', [...REVIEW_PURPOSES])
         .eq('status', status)
     )
   );
   const sent = (emailsSentCount.count ?? 0) + (queueSent.count ?? 0);
-  const clicks = clicksCount.count ?? 0;
+  const clicks = clicksCount;
+  const delivered = deliveredFromSent(sent);
   const pending = (pendingCount.count ?? 0) + (queuePending.count ?? 0);
   const failed = failedCount.count ?? 0;
   const newFeedback = newFeedbackCount.count ?? 0;
 
-  // Click-through rate on sent emails. Note this measures clicks on the
-  // review link, not confirmed reviews left on Google - Pentriq has no
-  // way to read that back from Google today, so this is a conversion proxy,
-  // not a true review-conversion rate.
-  const clickRate = sent > 0 ? Math.round((clicks / sent) * 1000) / 10 : null;
+  // Click-through rate = counted clicks / delivered emails * 100. Clicks are
+  // review-link clicks recorded by /r/{token} (bots and scanners excluded),
+  // not confirmed Google reviews - Pentriq cannot read those back from Google.
+  const clickRate = computeClickThroughRate(clicks, delivered);
 
   const customersTrend = buildTrend(newCustomerRows.data?.map((row) => row.created_at));
   const sentTrend = buildTrend(sentRows.data?.map((row) => row.sent_at));
-  const clicksTrend = buildTrend(clickRows.data?.map((row) => row.clicked_at));
+  const clicksTrend = buildTrend(clickTimestamps);
 
   const hasProfile = Boolean(business.name) && business.name !== 'My Business';
   const setupSteps: SetupStep[] = [
@@ -405,7 +409,7 @@ export default async function DashboardPage() {
           icon="chart"
           hint={
             sent > 0
-              ? `${clicks.toLocaleString('en-US')} clicks from ${sent.toLocaleString('en-US')} emails`
+              ? `${clicks.toLocaleString('en-US')} clicks from ${delivered.toLocaleString('en-US')} delivered emails`
               : 'Needs at least one sent request'
           }
         />
@@ -453,7 +457,7 @@ export default async function DashboardPage() {
             />
           ) : (
             <div className="flex flex-col items-center gap-6">
-              <ProgressRing percent={clickRate ?? 0} id="ctr" size={148} stroke={13}>
+              <ProgressRing percent={Math.min(100, clickRate ?? 0)} id="ctr" size={148} stroke={13}>
                 <span className="text-[30px] font-semibold leading-none tracking-[-0.04em] text-ink tabular-nums">
                   {clickRate}%
                 </span>
@@ -468,12 +472,38 @@ export default async function DashboardPage() {
                   </dt>
                   <dd className="font-semibold tabular-nums text-ink">{sent.toLocaleString('en-US')}</dd>
                 </div>
+                <div className="flex items-center justify-between" title="Accepted by the email provider. Bounce tracking isn't connected yet, so this equals Sent.">
+                  <dt className="flex items-center gap-2 text-ink-3">
+                    <span className="h-2 w-2 rounded-full bg-sky-400" />
+                    Delivered
+                  </dt>
+                  <dd className="font-semibold tabular-nums text-ink">{delivered.toLocaleString('en-US')}</dd>
+                </div>
+                <div className="flex items-center justify-between" title="Open tracking isn't supported.">
+                  <dt className="flex items-center gap-2 text-ink-3">
+                    <span className="h-2 w-2 rounded-full bg-ink-4" />
+                    Opened
+                  </dt>
+                  <dd className="text-ink-4">Not tracked</dd>
+                </div>
                 <div className="flex items-center justify-between">
                   <dt className="flex items-center gap-2 text-ink-3">
                     <span className="h-2 w-2 rounded-full bg-brand-500" />
                     Clicked
                   </dt>
-                  <dd className="font-semibold tabular-nums text-ink">{clicks.toLocaleString('en-US')}</dd>
+                  <dd className="font-semibold tabular-nums text-ink">
+                    {clicks.toLocaleString('en-US')}
+                    {uniqueClicked > 0 && uniqueClicked !== clicks && (
+                      <span className="ml-1.5 text-xs font-normal text-ink-4">({uniqueClicked.toLocaleString('en-US')} unique)</span>
+                    )}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between" title="Reviews confirmed in Pentriq. Google reviews can't be read back automatically.">
+                  <dt className="flex items-center gap-2 text-ink-3">
+                    <span className="h-2 w-2 rounded-full bg-violet-500" />
+                    Reviews received
+                  </dt>
+                  <dd className="font-semibold tabular-nums text-ink">{reviewsReceived.toLocaleString('en-US')}</dd>
                 </div>
                 {(pending > 0 || failed > 0) && (
                   <div className="flex flex-wrap gap-2 border-t border-line pt-3">

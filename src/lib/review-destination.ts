@@ -1,6 +1,6 @@
 /**
  * Shared helpers for the public click-tracking endpoints
- * (/api/track-message/[id] and /api/track/[id]).
+ * (/r/[token], plus the legacy /api/track-message/[id] and /api/track/[id]).
  *
  * The endpoints record the click, then HTTP-redirect to the business's Google
  * review URL. If that destination is missing/invalid, or the link itself is

@@ -11,7 +11,6 @@ import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Icon } from '@/components/ui/icons';
 import { LogVisitForm } from './log-visit-form';
-import { CompleteServiceButton } from './complete-service-button';
 import { TagEditor } from './tag-editor';
 import { CustomerActionsMenu } from '../customer-actions-menu';
 import { formatUKCurrency, formatUKDate } from '@/lib/uk-defaults';
@@ -73,7 +72,6 @@ export default async function CustomerDetailPage({ params }: { params: { custome
         adornment={adornment}
         actions={
           <div className="flex items-center gap-2">
-            <CompleteServiceButton customerId={customer.id} lastServiceDate={customer.last_service_date} />
             <CustomerActionsMenu
               customerId={customer.id}
               customer={{ name: customer.name, email: customer.email, phone: customer.phone }}
@@ -199,6 +197,12 @@ export default async function CustomerDetailPage({ params }: { params: { custome
                       Subscribed
                     </Badge>
                   )}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-ink-3">Last service</dt>
+                <dd className="font-medium text-ink">
+                  {customer.last_service_date ? formatDate(customer.last_service_date) : '\u2014'}
                 </dd>
               </div>
               {customer.source && (

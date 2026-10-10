@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { requireBusiness } from '@/lib/business';
-import { scheduleReviewRequest, todayIso } from '@/lib/eligibility';
+import { todayIso } from '@/lib/eligibility';
 import { extractReviewSchedulingLogic } from '@/lib/review-scheduling';
 import { sendManualReviewRequestFor, sendManualRebookingReminderFor } from '@/lib/manual-sends';
 
@@ -116,8 +116,14 @@ export async function removeCustomerTag(tagId: string, customerId: string) {
   revalidatePath(`/customers/${customerId}`);
 }
 
-/** Marks a service as received today and schedules the review request. */
-export async function completeService(customerId: string): Promise<{ error?: string }> {
+export type ManualActionResult = { error?: string; success?: boolean; message?: string };
+
+/**
+ * Admin-only: reset the customer's last service date to today. Deliberately
+ * does NOT create a visit, award points or schedule any message — use
+ * `logVisit` for that.
+ */
+export async function resetServiceDate(customerId: string): Promise<ManualActionResult> {
   const business = await requireBusiness();
   const supabase = createClient();
 
@@ -128,13 +134,10 @@ export async function completeService(customerId: string): Promise<{ error?: str
     .eq('business_id', business.id);
   if (error) return { error: error.message };
 
-  await scheduleReviewRequest(supabase, business.id, business.delay_hours, customerId);
   revalidatePath(`/customers/${customerId}`);
   revalidatePath('/customers');
-  return {};
+  return { success: true, message: 'Service date reset to today.' };
 }
-
-export type ManualActionResult = { error?: string; success?: boolean; message?: string };
 
 /** Owner-triggered: send a review request to this customer right now. */
 export async function sendManualReviewRequest(customerId: string): Promise<ManualActionResult> {

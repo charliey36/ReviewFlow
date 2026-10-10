@@ -176,7 +176,7 @@ fallback — not left out, but not fake either:
      [`supabase/migrations/0004_business_logo_storage.sql`](./supabase/migrations/0004_business_logo_storage.sql)
      (creates the public `business-logos` Storage bucket and its RLS
      policies, used by the profile picture uploader in Settings).
-   - **Migrations 0005–0017 are also required** for the current app. Apply
+   - **Migrations 0005–0018 are also required** for the current app. Apply
      every file in `supabase/migrations/` in numeric order. In particular,
      [`0017_ensure_business_settings_columns.sql`](./supabase/migrations/0017_ensure_business_settings_columns.sql)
      guarantees the columns the Settings page saves
@@ -284,10 +284,41 @@ scheduled workflow) hitting the same URLs.
 
 ## 7. Click tracking, feedback, and unsubscribe
 
-- `/api/track/[reviewRequestId]` and `/api/track-message/[messageId]` both
-  record a click and redirect to the business's Google review URL — the
-  former for the legacy flow, the latter for the generalized `messages`
-  flow.
+- **Review links are tracked.** Every review request/reminder email links to
+  `{NEXT_PUBLIC_APP_URL}/r/{tracking_token}` (never straight to Google). The
+  endpoint ([`src/app/r/[token]/route.ts`](./src/app/r/[token]/route.ts),
+  logic in [`src/lib/click-tracking.ts`](./src/lib/click-tracking.ts)):
+  1. looks up the send (`messages`, or legacy `review_requests`) by its
+     unguessable `tracking_token`;
+  2. classifies the hit — email security scanners, link previews, prefetch,
+     HEAD probes, known bot user agents and "clicked within 3 s of sending"
+     are logged as `review_link_scan` and **not counted**, and never cancel
+     follow-up reminders;
+  3. records a `review_link_clicked` row in `interaction_events` (message /
+     review request id, customer id, campaign (journey) id, timestamp, user
+     agent, **anonymised** IP — last IPv4 octet dropped / IPv6 cut to /48 —
+     and the destination URL) and updates `click_count`, `first_clicked_at`,
+     `last_clicked_at`, `destination_url` on the send;
+  4. ignores an immediate repeat click (30 s) from the same visitor, so
+     double-clicks and prefetch+click count once while genuine return visits
+     count again;
+  5. exits the journey enrollment (stops reminder steps) on a genuine click;
+  6. `302`s to the business's review URL (or the branded
+     `/review-unavailable` page if none is set). The redirect always happens,
+     even if recording fails.
+- Emails sent before this change keep working: `/api/track/[reviewRequestId]`
+  and `/api/track-message/[messageId]` are still served and share the same
+  handler. If migration 0018 hasn't been applied yet, links fall back to the
+  row id and clicks fall back to the older table shapes, so nothing breaks —
+  but run the migration to get per-send counters.
+- **Where clicks show up**: the Dashboard (clicks, click-through rate, a
+  Sent → Delivered → Opened → Clicked → Reviews received funnel, activity
+  chart) and the Analytics page (totals, campaign performance per sequence
+  step, recent clicks). CTR = counted clicks ÷ delivered emails × 100.
+  - *Delivered* currently equals *Sent* (accepted by Resend): no delivery
+    webhook is wired up. *Opened* is not tracked and shown as such.
+    *Reviews received* counts `review_confirmed` events — Pentriq cannot read
+    reviews back from Google.
 - `/feedback/[messageId]` is the public private-feedback landing page
   linked from every review request.
 - `/api/unsubscribe/[customerId]` stops all future emails to a customer.
@@ -329,6 +360,7 @@ src/
       track-message/[id]/       Generalized click tracking + redirect + journey exit
       unsubscribe/[customerId]/ Public unsubscribe endpoint
     book/[customerId]/          Public rebooking request landing page
+    r/[token]/                  Public tracked review link: records click, redirects to Google
     feedback/[messageId]/       Public private feedback landing page
     auth/callback/, login/, signup/
   components/                   Shared UI (auth form, nav links, logo)

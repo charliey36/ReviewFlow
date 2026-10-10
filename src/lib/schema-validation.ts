@@ -38,7 +38,7 @@ export async function validateDatabaseSchema(supabase: Db): Promise<SchemaValida
     // trip of latency instead of four). Each works by attempting a query that
     // fails if a table/column is missing.
     const [messagesRes, visitsRes, customersRes, businessesRes] = await Promise.all([
-      supabase.from('messages').select('id, visit_id').limit(1),
+      supabase.from('messages').select('id, visit_id, tracking_token, click_count').limit(1),
       supabase.from('visits').select('id, customer_id, service_id, visited_at').limit(1),
       supabase.from('customers').select('id, name, email, business_id').limit(1),
       supabase.from('businesses').select(REQUIRED_BUSINESS_COLUMNS.join(', ')).limit(1),
@@ -56,6 +56,14 @@ export async function validateDatabaseSchema(supabase: Db): Promise<SchemaValida
           'This column should exist from migration 0011_review_queue.sql or 0013_ensure_visit_id.sql\n' +
           'To fix: Run the missing migrations in your Supabase project via SQL editor:\n' +
           '  supabase/migrations/0013_ensure_visit_id.sql'
+        );
+      } else if (/tracking_token|click_count/.test(error.message)) {
+        result.isValid = false;
+        result.missingColumns.push('messages.tracking_token / messages.click_count');
+        result.errors.push(
+          'Missing review-link click tracking columns on messages.\n' +
+          'Clicks will not be counted per send (and emails fall back to id-based links) until this is fixed.\n' +
+          'To fix: run supabase/migrations/0018_review_link_click_tracking.sql in the Supabase SQL editor.'
         );
       } else {
         result.errors.push(`Messages table error: ${error.message}`);

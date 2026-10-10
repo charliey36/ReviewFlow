@@ -4,6 +4,7 @@ import { sendMessage, resolveChannel } from '@/lib/messaging';
 import { renderMessage } from '@/lib/templates';
 import { advanceJourneyEnrollment } from '@/lib/journeys';
 import { senderDisplayName, getAppUrl } from '@/lib/brand';
+import { buildTrackingUrl } from '@/lib/click-tracking';
 
 export const dynamic = 'force-dynamic';
 
@@ -104,7 +105,7 @@ export async function GET(request: NextRequest) {
       const unsubscribeUrl = `${appUrl}/api/unsubscribe/${customer.id}`;
       const privateFeedbackUrl = `${appUrl}/feedback/${message.id}`;
       const trackingUrl = business.google_review_url
-        ? `${appUrl}/api/track-message/${message.id}`
+        ? buildTrackingUrl(appUrl, message, { source: 'send-messages', kind: 'message' })
         : undefined;
 
       const rendered = renderMessage(message.purpose, channel, {
